@@ -110,7 +110,7 @@ router.post('/tests/generate', authorize(UserRole.FREELANCER), async (req: AuthR
 
     // Support both old format (single field) and new format (multiple fields)
     let fieldConfigs: Array<{ field: string; innerFields: string[] }> = [];
-    
+
     if (req.body.field && req.body.innerFields) {
       // Old format: single field
       fieldConfigs = [{ field: req.body.field, innerFields: req.body.innerFields }];
@@ -128,6 +128,22 @@ router.post('/tests/generate', authorize(UserRole.FREELANCER), async (req: AuthR
     const freelancer = await Freelancer.findOne({ userId: req.userId });
     if (!freelancer) {
       return res.status(404).json({ error: 'Freelancer profile not found' });
+    }
+
+    // Check if freelancer has been rejected and validate test level
+    if (freelancer.rejectedTestLevel) {
+      const levelHierarchy: Record<string, number> = { LOW: 1, MEDIUM: 2, HIGH: 3 };
+      const rejectedLevel = levelHierarchy[freelancer.rejectedTestLevel];
+      const requestedLevel = levelHierarchy[testLevel];
+
+      if (requestedLevel >= rejectedLevel) {
+        const allowedLevels = getAllowedTestLevels(freelancer.rejectedTestLevel);
+        return res.status(400).json({
+          error: `You were rejected at ${freelancer.rejectedTestLevel} level. You can only attempt ${allowedLevels.join(' or ')} level test${allowedLevels.length > 1 ? 's' : ''}.`,
+          rejectedLevel: freelancer.rejectedTestLevel,
+          allowedLevels
+        });
+      }
     }
 
     // Generate tests for each field
@@ -151,6 +167,16 @@ router.post('/tests/generate', authorize(UserRole.FREELANCER), async (req: AuthR
         generatedBy: 'GEMINI',
       });
 
+      await logAudit({
+        action: AuditAction.TEST_GENERATED,
+        userId: req.userId!,
+        entityType: 'Test',
+        entityId: test._id.toString(),
+        metadata: { field, innerFields, testLevel },
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+      });
+
       return test;
     });
 
@@ -160,9 +186,24 @@ router.post('/tests/generate', authorize(UserRole.FREELANCER), async (req: AuthR
     // Return array of tests (or single test for backward compatibility)
     res.status(201).json(tests.length === 1 ? tests[0] : tests);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('Error generating test:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate test' });
   }
 });
+
+// Helper function to get allowed test levels based on rejection
+function getAllowedTestLevels(rejectedLevel: string): string[] {
+  switch (rejectedLevel) {
+    case 'HIGH':
+      return ['MEDIUM', 'LOW'];
+    case 'MEDIUM':
+      return ['LOW'];
+    case 'LOW':
+      return []; // No retake allowed for LOW level rejection
+    default:
+      return ['LOW', 'MEDIUM', 'HIGH'];
+  }
+}
 
 // Submit test
 router.post('/tests/:testId/submit', authorize(UserRole.FREELANCER), async (req: AuthRequest, res) => {

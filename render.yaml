@@ -1,0 +1,52 @@
+# Render Blueprint - Skill Execution Platform
+# Deploy from: Dashboard > New > Blueprint > Connect repo and select this file
+# Or create two Web Services manually using the settings below.
+
+services:
+  # ========== Backend API (Express) ==========
+  - type: web
+    name: skill-platform-api
+    runtime: node
+
+    # Build & run from server directory
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+
+    # Health check path
+    healthCheckPath: /health
+
+    # Environment variables - set these in Render Dashboard (Environment)
+    # MONGODB_URI, JWT_SECRET, CLIENT_URL are required. Others optional.
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+
+  # ========== Frontend (Next.js) ==========
+  - type: web
+    name: skill-platform-web
+    runtime: node
+
+    # Build & run from client directory
+    rootDir: client
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+
+    # NEXT_PUBLIC_API_URL must point to your Backend URL (e.g. https://skill-platform-api.onrender.com/api)
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        sync: false

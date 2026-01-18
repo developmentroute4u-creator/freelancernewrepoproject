@@ -16,6 +16,29 @@ const router = express.Router();
 router.use(authenticate);
 router.use(authorize(UserRole.ADMIN));
 
+// Get all test submissions for admin dashboard
+router.get('/submissions', async (req: AuthRequest, res) => {
+  try {
+    const submissions = await TestSubmission.find()
+      .populate('testId', 'title field testLevel')
+      .populate({
+        path: 'freelancerId',
+        select: 'fullName',
+        populate: {
+          path: 'userId',
+          select: 'email'
+        }
+      })
+      .sort({ createdAt: -1 })
+      .limit(100);
+
+    res.json(submissions);
+  } catch (error: any) {
+    console.error('Error fetching submissions:', error);
+    res.status(500).json({ error: 'Failed to fetch submissions' });
+  }
+});
+
 // Review test submissions
 router.get('/test-submissions', async (req: AuthRequest, res) => {
   try {
@@ -27,7 +50,13 @@ router.get('/test-submissions', async (req: AuthRequest, res) => {
 
     const submissions = await TestSubmission.find(query)
       .populate('testId')
-      .populate('freelancerId')
+      .populate({
+        path: 'freelancerId',
+        populate: {
+          path: 'userId',
+          select: 'email'
+        }
+      })
       .sort({ createdAt: -1 });
 
     res.json(submissions);
@@ -45,6 +74,18 @@ router.post('/test-submissions/:submissionId/review', async (req: AuthRequest, r
     const submission = await TestSubmission.findById(submissionId);
     if (!submission) {
       return res.status(404).json({ error: 'Submission not found' });
+    }
+
+    // Check if freelancer already has an immutable badge
+    const existingBadge = await Badge.findOne({
+      freelancerId: submission.freelancerId,
+      isImmutable: true
+    });
+
+    if (existingBadge) {
+      return res.status(400).json({
+        error: 'This freelancer already has an immutable badge and cannot be re-badged. Badges are permanent once awarded.'
+      });
     }
 
     // Create badge

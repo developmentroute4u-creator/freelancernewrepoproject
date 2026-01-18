@@ -118,6 +118,8 @@ export default function SkillTestPage() {
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [fieldInnerFields, setFieldInnerFields] = useState<Record<string, string[]>>({});
   const [submissions, setSubmissions] = useState<Record<string, any>>({});
+  const [allowedLevels, setAllowedLevels] = useState<string[]>(['LOW', 'MEDIUM', 'HIGH']);
+  const [rejectionMessage, setRejectionMessage] = useState<string>('');
 
   const testForm = useForm({
     resolver: zodResolver(testSchema),
@@ -182,45 +184,62 @@ export default function SkillTestPage() {
     return formatted;
   };
 
+  // Helper to determine allowed levels based on rejection
+  const getAllowedTestLevels = (rejectedLevel: string): string[] => {
+    const levels = ['LOW', 'MEDIUM', 'HIGH'];
+    const rejectedIndex = levels.indexOf(rejectedLevel);
+    if (rejectedIndex !== -1) {
+      return levels.slice(0, rejectedIndex);
+    }
+    return levels; // Should not happen if rejectedLevel is valid
+  };
+
   useEffect(() => {
+    const loadFreelancer = async () => {
+      try {
+        const { data } = await api.get('/freelancers/me');
+        setFreelancer(data);
+
+        // Check if freelancer was rejected and set allowed levels
+        if (data.rejectedTestLevel) {
+          const allowed = getAllowedTestLevels(data.rejectedTestLevel);
+          setAllowedLevels(allowed);
+          setRejectionMessage(`You were rejected at ${data.rejectedTestLevel} level. You can only attempt ${allowed.join(' or ')} level tests.`);
+        }
+
+        // Check if basic education info exists (university and degree are still required)
+        if (!data.education || !data.education.universityName || !data.education.degree) {
+          router.push('/freelancer/onboarding');
+          return;
+        }
+
+        // Initialize with the freelancer's current field if it exists, otherwise start with empty selection
+        if (data.education.field) {
+          const initialField = data.education.field;
+          const initialInnerFields = data.education.innerFields || [];
+          setSelectedFields([initialField]);
+          setFieldInnerFields({ [initialField]: initialInnerFields });
+          testForm.setValue('fields', [{ field: initialField, innerFields: initialInnerFields }]);
+        }
+      } catch (error) {
+        console.error('Error loading freelancer:', error);
+        router.push('/freelancer/onboarding');
+      }
+    };
+
     loadFreelancer();
   }, []);
-
-  const loadFreelancer = async () => {
-    try {
-      const { data } = await api.get('/freelancers/me');
-      setFreelancer(data);
-
-      // Check if basic education info exists (university and degree are still required)
-      if (!data.education || !data.education.universityName || !data.education.degree) {
-        router.push('/freelancer/onboarding');
-        return;
-      }
-
-      // Initialize with the freelancer's current field if it exists, otherwise start with empty selection
-      if (data.education.field) {
-        const initialField = data.education.field;
-        const initialInnerFields = data.education.innerFields || [];
-        setSelectedFields([initialField]);
-        setFieldInnerFields({ [initialField]: initialInnerFields });
-        testForm.setValue('fields', [{ field: initialField, innerFields: initialInnerFields }]);
-      }
-    } catch (error) {
-      console.error('Error loading freelancer:', error);
-      router.push('/freelancer/onboarding');
-    }
-  };
 
   const toggleField = (field: string) => {
     const wasSelected = selectedFields.includes(field);
     const newSelectedFields = wasSelected
       ? selectedFields.filter(f => f !== field)
       : [...selectedFields, field];
-    
+
     setSelectedFields(newSelectedFields);
-    
+
     let newFieldInnerFields = { ...fieldInnerFields };
-    
+
     if (wasSelected) {
       // Field is being deselected - remove its inner fields
       delete newFieldInnerFields[field];
@@ -230,9 +249,9 @@ export default function SkillTestPage() {
         newFieldInnerFields[field] = [];
       }
     }
-    
+
     setFieldInnerFields(newFieldInnerFields);
-    
+
     // Update form
     const formFields = newSelectedFields.map(f => ({
       field: f,
@@ -246,10 +265,10 @@ export default function SkillTestPage() {
     const newInnerFields = currentInnerFields.includes(innerField)
       ? currentInnerFields.filter(f => f !== innerField)
       : [...currentInnerFields, innerField];
-    
+
     const newFieldInnerFields = { ...fieldInnerFields, [field]: newInnerFields };
     setFieldInnerFields(newFieldInnerFields);
-    
+
     // Update form
     const formFields = selectedFields.map(f => ({
       field: f,
@@ -382,12 +401,12 @@ export default function SkillTestPage() {
                               </div>
                             ))}
                           </div>
-                          {selectedFields.includes(field) && 
-                           (!fieldInnerFields[field] || fieldInnerFields[field].length === 0) && (
-                            <p className="text-sm text-red-500 mt-1">
-                              At least one inner field is required for {field}
-                            </p>
-                          )}
+                          {selectedFields.includes(field) &&
+                            (!fieldInnerFields[field] || fieldInnerFields[field].length === 0) && (
+                              <p className="text-sm text-red-500 mt-1">
+                                At least one inner field is required for {field}
+                              </p>
+                            )}
                         </div>
                       )}
                     </div>
@@ -408,16 +427,21 @@ export default function SkillTestPage() {
                     <SelectValue placeholder="Select test level" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="LOW">Low - Entry Level (2-4 hours)</SelectItem>
-                    <SelectItem value="MEDIUM">Medium - Intermediate (4-8 hours)</SelectItem>
-                    <SelectItem value="HIGH">High - Advanced (8-16 hours)</SelectItem>
+                    {allowedLevels.includes('LOW') && <SelectItem value="LOW">Low - Entry Level (2-4 hours)</SelectItem>}
+                    {allowedLevels.includes('MEDIUM') && <SelectItem value="MEDIUM">Medium - Intermediate (4-8 hours)</SelectItem>}
+                    {allowedLevels.includes('HIGH') && <SelectItem value="HIGH">High - Advanced (8-16 hours)</SelectItem>}
                   </SelectContent>
                 </Select>
                 {testForm.formState.errors.testLevel && (
                   <p className="text-sm text-red-500 mt-1">{String(testForm.formState.errors.testLevel.message)}</p>
                 )}
+                {rejectionMessage && (
+                  <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+                    ⚠️ {rejectionMessage}
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground mt-1">
-                  {selectedFields.length > 0 
+                  {selectedFields.length > 0
                     ? `${selectedFields.length} test${selectedFields.length > 1 ? 's' : ''} will be generated - one for each selected field.`
                     : 'Select at least one field to generate tests.'}
                 </p>

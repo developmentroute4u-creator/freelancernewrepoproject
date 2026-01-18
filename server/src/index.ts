@@ -8,8 +8,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
+// CORS: in production use CLIENT_URL (comma-separated for multiple). In dev allow all.
+const corsOrigin = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',').map((o) => o.trim())
+  : true;
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -51,6 +54,17 @@ app.use(errorHandler);
 
 // Start server
 const startServer = async () => {
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET is required in production. Set it in Render Environment.');
+      process.exit(1);
+    }
+    if (!process.env.MONGODB_URI) {
+      console.error('❌ MONGODB_URI is required in production. Set it in Render Environment.');
+      process.exit(1);
+    }
+  }
+
   await connectDatabase();
 
   // Create default admin user from .env
@@ -69,7 +83,7 @@ const startServer = async () => {
   const { seedPricingData } = await import('./config/seedPricing.js');
   await seedPricingData();
 
-  app.listen(PORT, () => {
+  app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
   });
 };
