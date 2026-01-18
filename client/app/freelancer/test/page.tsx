@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -108,10 +108,10 @@ function TestSubmissionForm({ test, onSubmit, isSubmitted }: { test: any; onSubm
   );
 }
 
-export default function SkillTestPage() {
+function SkillTestContent() {
   const router = useRouter();
-  const searchParams = useSearchParams(); // Added useSearchParams
-  const requestedLevel = searchParams.get('level'); // Get level from URL
+  const searchParams = useSearchParams();
+  const requestedLevel = searchParams.get('level');
 
   const [freelancer, setFreelancer] = useState<any>(null);
   const [tests, setTests] = useState<any[]>([]);
@@ -514,5 +514,24 @@ export default function SkillTestPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SkillTestPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-8 max-w-4xl">
+        <Card>
+          <CardContent className="py-8 text-center">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/3 mx-auto mb-4" />
+              <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <SkillTestContent />
+    </Suspense>
   );
 }

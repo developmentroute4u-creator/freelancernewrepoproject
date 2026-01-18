@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -61,7 +61,7 @@ interface GeneratedScope {
   };
 }
 
-export default function CreateProject() {
+function CreateProjectContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const freelancerId = searchParams.get('freelancerId');
@@ -876,5 +876,17 @@ export default function CreateProject() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CreateProject() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-8 max-w-4xl">
+        <div className="animate-pulse h-64 bg-muted rounded" />
+      </div>
+    }>
+      <CreateProjectContent />
+    </Suspense>
   );
 }
