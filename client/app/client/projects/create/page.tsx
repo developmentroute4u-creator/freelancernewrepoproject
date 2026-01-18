@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
+
+// Force dynamic rendering to avoid prerender errors with useSearchParams
+export const dynamic = 'force-dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -710,12 +713,11 @@ function CreateProjectContent() {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* ACCOUNTABILITY Mode - Yes */}
-                <Card 
-                  className={`border-2 cursor-pointer transition-all ${
-                    selectedAccountabilityMode === 'ACCOUNTABILITY' 
-                      ? 'border-green-500 bg-green-50' 
-                      : 'border-gray-200 hover:border-green-300'
-                  }`}
+                <Card
+                  className={`border-2 cursor-pointer transition-all ${selectedAccountabilityMode === 'ACCOUNTABILITY'
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-green-300'
+                    }`}
                   onClick={() => handleAccountabilitySelection('ACCOUNTABILITY')}
                 >
                   <CardHeader>
@@ -782,12 +784,11 @@ function CreateProjectContent() {
                 </Card>
 
                 {/* BASIC Mode - No */}
-                <Card 
-                  className={`border-2 cursor-pointer transition-all ${
-                    selectedAccountabilityMode === 'BASIC' 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200 hover:border-blue-300'
-                  }`}
+                <Card
+                  className={`border-2 cursor-pointer transition-all ${selectedAccountabilityMode === 'BASIC'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-blue-300'
+                    }`}
                   onClick={() => handleAccountabilitySelection('BASIC')}
                 >
                   <CardHeader>
@@ -879,13 +880,10 @@ function CreateProjectContent() {
   );
 }
 
-export default function CreateProject() {
+// Wrap in Suspense for useSearchParams
+export default function CreateProjectWrapper() {
   return (
-    <Suspense fallback={
-      <div className="container mx-auto py-8 max-w-4xl">
-        <div className="animate-pulse h-64 bg-muted rounded" />
-      </div>
-    }>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
       <CreateProjectContent />
     </Suspense>
   );

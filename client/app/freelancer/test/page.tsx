@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
+
+// Force dynamic rendering to avoid prerender errors with useSearchParams
+export const dynamic = 'force-dynamic';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -108,7 +111,7 @@ function TestSubmissionForm({ test, onSubmit, isSubmitted }: { test: any; onSubm
   );
 }
 
-function SkillTestContent() {
+function SkillTestPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedLevel = searchParams.get('level');
@@ -517,21 +520,11 @@ function SkillTestContent() {
   );
 }
 
-export default function SkillTestPage() {
+// Wrap in Suspense for useSearchParams
+export default function SkillTestPageWrapper() {
   return (
-    <Suspense fallback={
-      <div className="container mx-auto py-8 max-w-4xl">
-        <Card>
-          <CardContent className="py-8 text-center">
-            <div className="animate-pulse">
-              <div className="h-8 bg-gray-200 rounded w-1/3 mx-auto mb-4" />
-              <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    }>
-      <SkillTestContent />
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <SkillTestPage />
     </Suspense>
   );
 }
