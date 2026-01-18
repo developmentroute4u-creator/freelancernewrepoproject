@@ -2,7 +2,7 @@ import express from 'express';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 import { UserRole } from '../models/User.js';
 import { Escalation, EscalationStatus, EscalationType } from '../models/Escalation.js';
-import { Project } from '../models/Project.js';
+import { Project, ProjectState } from '../models/Project.js';
 import { logAudit, AuditAction } from '../utils/auditLogger.js';
 
 const router = express.Router();
@@ -33,7 +33,7 @@ router.post('/', async (req: AuthRequest, res) => {
     });
 
     // Update project state to DISPUTED
-    project.state = 'DISPUTED';
+    project.state = ProjectState.DISPUTED;
     await project.save();
 
     await logAudit({

@@ -167,16 +167,6 @@ router.post('/tests/generate', authorize(UserRole.FREELANCER), async (req: AuthR
         generatedBy: 'GEMINI',
       });
 
-      await logAudit({
-        action: AuditAction.TEST_GENERATED,
-        userId: req.userId!,
-        entityType: 'Test',
-        entityId: test._id.toString(),
-        metadata: { field, innerFields, testLevel },
-        ipAddress: req.ip,
-        userAgent: req.get('user-agent'),
-      });
-
       return test;
     });
 
@@ -186,8 +176,7 @@ router.post('/tests/generate', authorize(UserRole.FREELANCER), async (req: AuthR
     // Return array of tests (or single test for backward compatibility)
     res.status(201).json(tests.length === 1 ? tests[0] : tests);
   } catch (error: any) {
-    console.error('Error generating test:', error);
-    res.status(500).json({ error: error.message || 'Failed to generate test' });
+    res.status(500).json({ error: error.message });
   }
 });
 
