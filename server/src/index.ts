@@ -9,9 +9,15 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS: in production use CLIENT_URL (comma-separated for multiple). In dev allow all.
-const corsOrigin = process.env.CLIENT_URL
-  ? process.env.CLIENT_URL.split(',').map((o) => o.trim())
+const clientUrl = process.env.CLIENT_URL;
+console.log('🔧 CORS Configuration:');
+console.log('   CLIENT_URL env:', clientUrl || '(not set - allowing all origins)');
+
+const corsOrigin = clientUrl
+  ? clientUrl.split(',').map((o) => o.trim())
   : true;
+
+console.log('   Allowed origins:', corsOrigin);
 
 const corsOptions = {
   origin: corsOrigin,
