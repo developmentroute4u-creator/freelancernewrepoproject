@@ -62,15 +62,15 @@ app.get('/health', (req, res) => {
 import { errorHandler } from './middleware/errorHandler.js';
 app.use(errorHandler);
 
-// Start server
-const startServer = async () => {
+// Initialize database and app
+const initializeApp = async () => {
   if (process.env.NODE_ENV === 'production') {
     if (!process.env.JWT_SECRET) {
-      console.error('❌ JWT_SECRET is required in production. Set it in Render Environment.');
+      console.error('❌ JWT_SECRET is required in production. Set it in Environment Variables.');
       process.exit(1);
     }
     if (!process.env.MONGODB_URI) {
-      console.error('❌ MONGODB_URI is required in production. Set it in Render Environment.');
+      console.error('❌ MONGODB_URI is required in production. Set it in Environment Variables.');
       process.exit(1);
     }
   }
@@ -92,10 +92,24 @@ const startServer = async () => {
   // Seed pricing data
   const { seedPricingData } = await import('./config/seedPricing.js');
   await seedPricingData();
+};
+
+// Start server only if not in serverless environment (Vercel)
+const startServer = async () => {
+  await initializeApp();
 
   app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
   });
 };
 
-startServer().catch(console.error);
+// Export for Vercel serverless
+export default app;
+
+// Initialize app for serverless (Vercel will handle this)
+if (process.env.VERCEL) {
+  initializeApp().catch(console.error);
+} else {
+  // Start traditional server for local development
+  startServer().catch(console.error);
+}

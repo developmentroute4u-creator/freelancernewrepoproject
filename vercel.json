@@ -1,0 +1,13 @@
+{
+    "version": 2,
+    "buildCommand": "cd server && npm ci && npm run build",
+    "installCommand": "npm --prefix client install",
+    "framework": "nextjs",
+    "outputDirectory": "client/.next",
+    "rewrites": [
+        {
+            "source": "/api/:path*",
+            "destination": "/api/index"
+        }
+    ]
+}

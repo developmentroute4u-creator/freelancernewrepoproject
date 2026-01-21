@@ -102,7 +102,7 @@ const FreelancerSchema = new Schema<IFreelancer>(
   }
 );
 
-FreelancerSchema.index({ userId: 1 });
+// userId index is automatically created by unique: true
 FreelancerSchema.index({ badgeLevel: 1 });
 FreelancerSchema.index({ 'education.field': 1 });
 FreelancerSchema.index({ status: 1 });

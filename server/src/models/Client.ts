@@ -45,7 +45,7 @@ const ClientSchema = new Schema<IClient>(
   }
 );
 
-ClientSchema.index({ userId: 1 });
+// userId index is automatically created by unique: true
 ClientSchema.index({ industry: 1 });
 
 export const Client = mongoose.model<IClient>('Client', ClientSchema);
