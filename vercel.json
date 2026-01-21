@@ -1,7 +1,6 @@
 {
     "version": 2,
-    "buildCommand": "cd server && npm ci && npm run build",
-    "installCommand": "npm --prefix client install",
+    "buildCommand": "cd server && npm install && npm run build && cd ../client && npm install && npm run build",
     "framework": "nextjs",
     "outputDirectory": "client/.next",
     "rewrites": [

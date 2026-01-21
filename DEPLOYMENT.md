@@ -4,8 +4,9 @@
 
 1. **Server Export**: Added `export default app` to [`index.ts`](file:///e:/Freelancer%20platform/server/src/index.ts)
 2. **Mongoose Warnings**: Removed duplicate indexes in User, Freelancer, and Client models
-3. **Vercel Config**: Created [`vercel.json`](file:///e:/Freelancer%20platform/vercel.json) with proper build settings
-4. **API Handler**: Created [`api/index.js`](file:///e:/Freelancer%20platform/api/index.js) for serverless deployment
+3. **Vercel Config**: Created [`vercel.json`](file:///e:/Freelancer%20platform/vercel.json) with proper monorepo build settings
+4. **Monorepo Paths**: Fixed build command to correctly install dependencies from root directory
+5. **API Handler**: Created [`api/index.js`](file:///e:/Freelancer%20platform/api/index.js) for serverless deployment
 
 ## 🚀 Deploy to Vercel
 
