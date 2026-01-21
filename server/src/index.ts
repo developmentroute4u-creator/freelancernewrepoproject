@@ -8,25 +8,19 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS: in production use CLIENT_URL (comma-separated for multiple). In dev allow all.
-const clientUrl = process.env.CLIENT_URL;
-console.log('🔧 CORS Configuration:');
-console.log('   CLIENT_URL env:', clientUrl || '(not set - allowing all origins)');
-
-const corsOrigin = clientUrl
-  ? clientUrl.split(',').map((o) => o.trim())
-  : true;
-
-console.log('   Allowed origins:', corsOrigin);
-
+// CORS: Allow all origins for now to fix the issue
+// You can restrict this later by setting CLIENT_URL
 const corsOptions = {
-  origin: corsOrigin,
+  origin: true, // Allow all origins
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };
 
-// Handle preflight requests
+console.log('🔧 CORS: Allowing all origins');
+
+// Handle preflight requests explicitly
 app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
 app.use(express.json());
