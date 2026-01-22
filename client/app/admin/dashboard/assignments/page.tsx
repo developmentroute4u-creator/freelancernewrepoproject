@@ -195,12 +195,12 @@ export default function AdminAssignments() {
         }
     };
 
-    const getStatusColor = (status: string) => {
+    const getStatusColor = (status: string): "success" | "warning" | "error" | "info" | "neutral" | "primary" | "outline" => {
         switch (status) {
-            case 'SUBMITTED': return 'secondary';
-            case 'UNDER_REVIEW': return 'default';
-            case 'REVIEWED': return 'default';
-            default: return 'secondary';
+            case 'SUBMITTED': return 'warning';
+            case 'UNDER_REVIEW': return 'info';
+            case 'REVIEWED': return 'success';
+            default: return 'neutral';
         }
     };
 
@@ -272,7 +272,7 @@ export default function AdminAssignments() {
 
                                         {submission.status !== 'REVIEWED' && (
                                             <>
-                                                <Button size="sm" variant="default" onClick={() => openReviewDialog(submission)}>
+                                                <Button size="sm" variant="solid" onClick={() => openReviewDialog(submission)}>
                                                     Review & Award Badge
                                                 </Button>
                                                 <Button size="sm" variant="destructive" onClick={() => handleReject(submission._id)}>
