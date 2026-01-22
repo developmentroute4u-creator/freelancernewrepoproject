@@ -356,9 +356,9 @@ export default function FreelancerDashboard() {
                       <Card
                         key={submission._id}
                         className={`border-l-4 ${isReviewed ? 'border-l-green-500 bg-green-50/30' :
-                            isUnderReview ? 'border-l-yellow-500 bg-yellow-50/30' :
-                              isRejected ? 'border-l-red-500 bg-red-50/30' :
-                                'border-l-blue-500 bg-blue-50/30'
+                          isUnderReview ? 'border-l-yellow-500 bg-yellow-50/30' :
+                            isRejected ? 'border-l-red-500 bg-red-50/30' :
+                              'border-l-blue-500 bg-blue-50/30'
                           }`}
                       >
                         <CardHeader>
@@ -769,7 +769,7 @@ export default function FreelancerDashboard() {
                                             )}
                                           </div>
                                         </CardContent>
-                                      </CardHeader>
+                                      </Card>
                                     );
                                   })}
                               </div>
