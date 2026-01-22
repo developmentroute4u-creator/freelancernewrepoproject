@@ -111,8 +111,9 @@ router.post('/test-submissions/:submissionId/review', async (req: AuthRequest, r
       status: FreelancerStatus.APPROVED,
     });
 
-    // Update submission
+    // Update submission - mark as approved (not rejected)
     submission.status = 'REVIEWED';
+    submission.rejected = false; // Explicitly mark as not rejected (passed)
     submission.reviewedAt = new Date();
     submission.reviewedBy = new Types.ObjectId(req.userId!);
     await submission.save();
@@ -144,18 +145,33 @@ router.post('/test-submissions/:submissionId/reject', async (req: AuthRequest, r
       return res.status(404).json({ error: 'Submission not found' });
     }
 
-    // Update freelancer - set rejected test level for retake logic
-    await Freelancer.findByIdAndUpdate(submission.freelancerId, {
-      rejectedTestLevel: (submission.testId as any).testLevel,
-      badgeFeedback: feedback,
-      status: FreelancerStatus.REJECTED,
-    });
+    // Get freelancer to check if they have an approved badge
+    const freelancer = await Freelancer.findById(submission.freelancerId);
+    if (!freelancer) {
+      return res.status(404).json({ error: 'Freelancer not found' });
+    }
 
-    // Update submission
+    // Update submission - mark as rejected
     submission.status = 'REVIEWED';
+    submission.rejected = true;
+    submission.rejectionFeedback = feedback;
     submission.reviewedAt = new Date();
     submission.reviewedBy = new Types.ObjectId(req.userId!);
     await submission.save();
+
+    // Update freelancer - only set status to REJECTED if they don't have an approved badge
+    // If they have an approved badge, keep status as APPROVED and just track the rejected test level
+    const updateData: any = {
+      rejectedTestLevel: (submission.testId as any).testLevel,
+    };
+
+    // Only change status to REJECTED if freelancer doesn't have an approved badge
+    if (!freelancer.badgeLevel || freelancer.status !== FreelancerStatus.APPROVED) {
+      updateData.status = FreelancerStatus.REJECTED;
+      updateData.badgeFeedback = feedback;
+    }
+
+    await Freelancer.findByIdAndUpdate(submission.freelancerId, updateData);
 
     await logAudit({
       action: AuditAction.BADGE_AWARDED,

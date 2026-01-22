@@ -392,11 +392,15 @@ router.get('/by-project/:projectId', authorize(UserRole.CLIENT), async (req: Aut
     console.log('📋 Project field:', scope.field);
     console.log('📋 Project innerFields:', scope.innerFields);
 
-    // Build query with correct property path
+    // Build query with matching criteria (from FREELANCER_MATCHING_CRITERIA.md):
+    // 1. Field Match: education.field must match scope.field
+    // 2. Badge Level: Must have completed a test (badgeLevel exists)
+    // 3. Approval Status: Must be APPROVED (only show freelancers who passed at least one test)
+    // Note: If a freelancer has an approved badge, they are shown even if they have some rejected tests
     const query: any = {
-      'education.field': scope.field, // FIX: Use education.field instead of field
-      badgeLevel: { $exists: true, $ne: null }, // Must have a badge (LOW, MEDIUM, or HIGH)
-      status: FreelancerStatus.APPROVED, // Must be approved by admin
+      'education.field': scope.field, // Primary criteria: Field match
+      badgeLevel: { $exists: true, $ne: null }, // Primary criteria: Must have completed a test
+      status: FreelancerStatus.APPROVED, // Primary criteria: Must be approved (passed at least one test)
     };
 
     // Optional: Filter by inner fields if specified (at least one match)

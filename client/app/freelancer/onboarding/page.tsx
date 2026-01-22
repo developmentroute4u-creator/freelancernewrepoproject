@@ -13,13 +13,67 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import api from '@/lib/api';
 
+// Helper to transform empty/NaN values to undefined for optional number fields
+const optionalNumber = z.preprocess(
+  (val) => {
+    // Handle all empty/NaN cases first
+    if (val === '' || val === null || val === undefined) {
+      return undefined;
+    }
+    // Handle NaN
+    if (typeof val === 'number' && isNaN(val)) {
+      return undefined;
+    }
+    // Convert string to number
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed === '') return undefined;
+      const num = parseFloat(trimmed);
+      return isNaN(num) ? undefined : num;
+    }
+    // If it's already a valid number, return it
+    if (typeof val === 'number') {
+      return val >= 0 ? val : undefined;
+    }
+    return undefined;
+  },
+  z.union([z.number().min(0), z.undefined()])
+);
+
+// Helper for comfort range (must be positive if provided)
+const optionalPositiveNumber = z.preprocess(
+  (val) => {
+    // Handle all empty/NaN cases first
+    if (val === '' || val === null || val === undefined) {
+      return undefined;
+    }
+    // Handle NaN
+    if (typeof val === 'number' && isNaN(val)) {
+      return undefined;
+    }
+    // Convert string to number
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed === '') return undefined;
+      const num = parseFloat(trimmed);
+      return isNaN(num) ? undefined : num;
+    }
+    // If it's already a valid number, return it (must be positive)
+    if (typeof val === 'number') {
+      return val > 0 ? val : undefined;
+    }
+    return undefined;
+  },
+  z.union([z.number().positive(), z.undefined()])
+);
+
 const personalDetailsSchema = z.object({
   fullName: z.string().min(1, 'Full name is required'),
   mobileNumber: z.string().min(10, 'Valid mobile number is required'),
-  yearsOfExperience: z.number().optional(),
+  yearsOfExperience: optionalNumber,
   location: z.string().min(1, 'Location is required'),
-  expectedComfortRangeMin: z.number().optional(),
-  expectedComfortRangeMax: z.number().optional(),
+  expectedComfortRangeMin: optionalPositiveNumber,
+  expectedComfortRangeMax: optionalPositiveNumber,
   availability: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT_BASED', 'HOURLY_BASED'], {
     required_error: 'Availability is required',
   }),
@@ -134,7 +188,22 @@ export default function FreelancerOnboarding() {
     setError('');
     setLoading(true);
     try {
-      await api.post('/freelancers', data);
+      // Clean up optional fields - remove undefined, null, or NaN values
+      const cleanedData: any = {
+        ...data,
+        yearsOfExperience: data.yearsOfExperience && !isNaN(data.yearsOfExperience) ? data.yearsOfExperience : undefined,
+        expectedComfortRangeMin: data.expectedComfortRangeMin && !isNaN(data.expectedComfortRangeMin) ? data.expectedComfortRangeMin : undefined,
+        expectedComfortRangeMax: data.expectedComfortRangeMax && !isNaN(data.expectedComfortRangeMax) ? data.expectedComfortRangeMax : undefined,
+      };
+
+      // Remove undefined values from the payload
+      Object.keys(cleanedData).forEach(key => {
+        if (cleanedData[key] === undefined || cleanedData[key] === null || (typeof cleanedData[key] === 'number' && isNaN(cleanedData[key]))) {
+          delete cleanedData[key];
+        }
+      });
+
+      await api.post('/freelancers', cleanedData);
       setActiveTab('education');
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || error.message || 'Failed to save personal details';
@@ -262,7 +331,13 @@ export default function FreelancerOnboarding() {
                   <Input
                     id="yearsOfExperience"
                     type="number"
-                    {...personalForm.register('yearsOfExperience', { valueAsNumber: true })}
+                    {...personalForm.register('yearsOfExperience', {
+                      setValueAs: (v: any) => {
+                        if (v === '' || v === null || v === undefined) return undefined;
+                        const num = typeof v === 'string' ? parseFloat(v) : Number(v);
+                        return isNaN(num) ? undefined : num;
+                      }
+                    })}
                   />
                 </div>
 
@@ -283,7 +358,13 @@ export default function FreelancerOnboarding() {
                     <Input
                       id="expectedComfortRangeMin"
                       type="number"
-                      {...personalForm.register('expectedComfortRangeMin', { valueAsNumber: true })}
+                      {...personalForm.register('expectedComfortRangeMin', {
+                        setValueAs: (v: any) => {
+                          if (v === '' || v === null || v === undefined) return undefined;
+                          const num = typeof v === 'string' ? parseFloat(v) : Number(v);
+                          return isNaN(num) ? undefined : num;
+                        }
+                      })}
                       placeholder="e.g., 50000"
                     />
                   </div>
@@ -292,7 +373,13 @@ export default function FreelancerOnboarding() {
                     <Input
                       id="expectedComfortRangeMax"
                       type="number"
-                      {...personalForm.register('expectedComfortRangeMax', { valueAsNumber: true })}
+                      {...personalForm.register('expectedComfortRangeMax', {
+                        setValueAs: (v: any) => {
+                          if (v === '' || v === null || v === undefined) return undefined;
+                          const num = typeof v === 'string' ? parseFloat(v) : Number(v);
+                          return isNaN(num) ? undefined : num;
+                        }
+                      })}
                       placeholder="e.g., 80000"
                     />
                     {personalForm.formState.errors.expectedComfortRangeMax && (

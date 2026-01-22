@@ -12,6 +12,8 @@ export interface ITestSubmission extends Document {
   reviewedAt?: Date;
   reviewedBy?: Types.ObjectId; // Admin userId
   status: 'SUBMITTED' | 'UNDER_REVIEW' | 'REVIEWED';
+  rejected?: boolean; // Track if this specific test was rejected
+  rejectionFeedback?: string; // Feedback for rejected test
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,6 +45,13 @@ const TestSubmissionSchema = new Schema<ITestSubmission>(
       type: String,
       enum: ['SUBMITTED', 'UNDER_REVIEW', 'REVIEWED'],
       default: 'SUBMITTED',
+    },
+    rejected: {
+      type: Boolean,
+      default: false,
+    },
+    rejectionFeedback: {
+      type: String,
     },
   },
   {

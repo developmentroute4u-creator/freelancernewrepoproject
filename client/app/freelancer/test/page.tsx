@@ -115,6 +115,7 @@ function SkillTestPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedLevel = searchParams.get('level');
+  const retestTestId = searchParams.get('retest');
 
   const [freelancer, setFreelancer] = useState<any>(null);
   const [tests, setTests] = useState<any[]>([]);
@@ -123,6 +124,8 @@ function SkillTestPage() {
   const [submissions, setSubmissions] = useState<Record<string, any>>({});
   const [allowedLevels, setAllowedLevels] = useState<string[]>(['LOW', 'MEDIUM', 'HIGH']);
   const [rejectionMessage, setRejectionMessage] = useState<string>('');
+  const [isRetest, setIsRetest] = useState(false);
+  const [retestTest, setRetestTest] = useState<any>(null);
 
   const testForm = useForm({
     resolver: zodResolver(testSchema),
@@ -203,6 +206,33 @@ function SkillTestPage() {
         const { data } = await api.get('/freelancers/me');
         setFreelancer(data);
 
+        // Check if this is a retest request
+        if (retestTestId) {
+          setIsRetest(true);
+          try {
+            // Load the test to retake
+            const { data: testData } = await api.get(`/tests/${retestTestId}`);
+            setRetestTest(testData);
+
+            // Pre-populate fields with the test's field and innerFields
+            if (testData.field) {
+              setSelectedFields([testData.field]);
+              setFieldInnerFields({ [testData.field]: testData.innerFields || [] });
+              testForm.setValue('fields', [{ field: testData.field, innerFields: testData.innerFields || [] }]);
+            }
+
+            // Set the test level
+            if (testData.testLevel) {
+              testForm.setValue('testLevel', testData.testLevel);
+            }
+          } catch (error) {
+            console.error('Error loading test for retest:', error);
+            alert('Error loading test. Please try again.');
+            router.push('/freelancer/dashboard');
+          }
+          return;
+        }
+
         // Check if freelancer was rejected and set allowed levels
         if (data.rejectedTestLevel) {
           const allowed = getAllowedTestLevels(data.rejectedTestLevel);
@@ -231,7 +261,7 @@ function SkillTestPage() {
     };
 
     loadFreelancer();
-  }, []);
+  }, [retestTestId]);
 
   const toggleField = (field: string) => {
     const wasSelected = selectedFields.includes(field);
@@ -356,8 +386,23 @@ function SkillTestPage() {
     );
   }
 
+  // If retesting, show the test directly
+  useEffect(() => {
+    if (isRetest && retestTest) {
+      setTests([retestTest]);
+    }
+  }, [isRetest, retestTest]);
+
   return (
     <div className="container mx-auto py-8 max-w-4xl">
+      {isRetest && retestTest && (
+        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="font-semibold text-yellow-900">🔄 Retesting: {retestTest.title}</p>
+          <p className="text-sm text-yellow-800 mt-1">
+            You are retaking this test. Please submit your new solution below.
+          </p>
+        </div>
+      )}
       {tests.length === 0 ? (
         <Card>
           <CardHeader>
