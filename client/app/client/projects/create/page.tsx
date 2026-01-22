@@ -53,10 +53,23 @@ interface GeneratedScope {
   scopeMode: string;
   isLocked: boolean;
   pricing?: {
-    finalPrice: number;
-    currency: string;
-    clientExplanation: string;
-    freelancerExplanation: string;
+    // New deterministic pricing format
+    tiers?: {
+      low: number;
+      medium: number;
+      high: number;
+    };
+    breakdown?: {
+      scopeSize: string;
+      complexityDrivers: string[];
+      recommended: 'LOW' | 'MEDIUM' | 'HIGH';
+    };
+    calculationId?: string;
+    // Legacy format (for backward compatibility)
+    finalPrice?: number;
+    currency?: string;
+    clientExplanation?: string;
+    freelancerExplanation?: string;
     priceRange?: {
       min: number;
       max: number;
@@ -117,12 +130,10 @@ function CreateProjectContent() {
 
       setGeneratedScope(scope);
 
-      // Calculate price after scope is generated
+      // Calculate price after scope is generated using new deterministic pricing
       try {
-        const tempProjectId = 'temp_' + Date.now();
-        const pricingResponse = await api.post('/pricing/calculate', {
+        const pricingResponse = await api.post('/pricing/estimate', {
           scopeId: scope._id,
-          projectId: tempProjectId,
         });
 
         console.log('💰 Price calculated:', pricingResponse.data);
@@ -130,8 +141,11 @@ function CreateProjectContent() {
           ...scope,
           pricing: pricingResponse.data,
         });
-      } catch (pricingError) {
+      } catch (pricingError: any) {
         console.error('⚠️ Error calculating price:', pricingError);
+        // Don't block the flow if pricing fails - show error but continue
+        const errorMessage = pricingError.response?.data?.error || pricingError.message || 'Failed to calculate pricing';
+        console.warn('Pricing calculation failed:', errorMessage);
       }
 
       setStep('preview');
@@ -466,7 +480,7 @@ function CreateProjectContent() {
             </CardContent>
           </Card>
 
-          {/* Pricing Display */}
+          {/* Pricing Display - New Deterministic Pricing with Tiers */}
           {generatedScope.pricing && (
             <Card className="border-2 border-green-500">
               <CardHeader>
@@ -474,20 +488,89 @@ function CreateProjectContent() {
                 <CardDescription>Based on scope complexity and platform fair pricing</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-4">
-                  <p className="text-4xl font-bold text-green-600">
-                    ₹{generatedScope.pricing.finalPrice?.toLocaleString() || 'Calculating...'}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">Indian Rupees (INR)</p>
-                </div>
-                {generatedScope.pricing.clientExplanation && (
-                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm whitespace-pre-line">{generatedScope.pricing.clientExplanation}</p>
+                {generatedScope.pricing.tiers ? (
+                  // New format: Show LOW/MEDIUM/HIGH tiers
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-4">
+                      {/* LOW Tier */}
+                      <div className={`p-4 rounded-lg border-2 ${
+                        generatedScope.pricing.breakdown?.recommended === 'LOW' 
+                          ? 'border-green-500 bg-green-50' 
+                          : 'border-gray-200'
+                      }`}>
+                        <p className="text-xs text-muted-foreground mb-1">LOW</p>
+                        <p className="text-2xl font-bold text-gray-700">
+                          ₹{generatedScope.pricing.tiers.low.toLocaleString()}
+                        </p>
+                      </div>
+                      
+                      {/* MEDIUM Tier (Recommended) */}
+                      <div className={`p-4 rounded-lg border-2 ${
+                        generatedScope.pricing.breakdown?.recommended === 'MEDIUM' 
+                          ? 'border-green-500 bg-green-50' 
+                          : 'border-gray-200'
+                      }`}>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs text-muted-foreground">MEDIUM</p>
+                          {generatedScope.pricing.breakdown?.recommended === 'MEDIUM' && (
+                            <Badge className="bg-green-500 text-xs">Recommended</Badge>
+                          )}
+                        </div>
+                        <p className="text-2xl font-bold text-green-600">
+                          ₹{generatedScope.pricing.tiers.medium.toLocaleString()}
+                        </p>
+                      </div>
+                      
+                      {/* HIGH Tier */}
+                      <div className={`p-4 rounded-lg border-2 ${
+                        generatedScope.pricing.breakdown?.recommended === 'HIGH' 
+                          ? 'border-green-500 bg-green-50' 
+                          : 'border-gray-200'
+                      }`}>
+                        <p className="text-xs text-muted-foreground mb-1">HIGH</p>
+                        <p className="text-2xl font-bold text-gray-700">
+                          ₹{generatedScope.pricing.tiers.high.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Breakdown */}
+                    {generatedScope.pricing.breakdown && (
+                      <div className="mt-4 p-4 bg-blue-50 rounded-lg space-y-2">
+                        <p className="text-sm font-semibold">Price Breakdown:</p>
+                        <ul className="text-sm space-y-1">
+                          <li>✓ {generatedScope.pricing.breakdown.scopeSize}</li>
+                          {generatedScope.pricing.breakdown.complexityDrivers.map((driver, idx) => (
+                            <li key={idx}>✓ {driver}</li>
+                          ))}
+                        </ul>
+                        <p className="text-sm font-semibold mt-2 text-green-700">
+                          Recommended: {generatedScope.pricing.breakdown.recommended} (professional)
+                        </p>
+                      </div>
+                    )}
+                    
+                    <div className="mt-4 text-xs text-center text-muted-foreground">
+                      This is a fixed price. You can accept, reduce scope, or cancel.
+                    </div>
+                  </div>
+                ) : (
+                  // Legacy format: Single price (fallback)
+                  <div className="text-center py-4">
+                    <p className="text-4xl font-bold text-green-600">
+                      ₹{generatedScope.pricing.finalPrice?.toLocaleString() || 'Calculating...'}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2">Indian Rupees (INR)</p>
+                    {generatedScope.pricing.clientExplanation && (
+                      <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                        <p className="text-sm whitespace-pre-line">{generatedScope.pricing.clientExplanation}</p>
+                      </div>
+                    )}
+                    <div className="mt-4 text-xs text-center text-muted-foreground">
+                      This is a fixed price. Final price confirmed when you select a scope mode.
+                    </div>
                   </div>
                 )}
-                <div className="mt-4 text-xs text-center text-muted-foreground">
-                  This is a fixed price. Final price confirmed when you select a scope mode.
-                </div>
               </CardContent>
             </Card>
           )}

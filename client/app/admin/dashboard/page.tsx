@@ -1,141 +1,248 @@
-﻿'use client';
+﻿/**
+ * ADMIN DASHBOARD - Premium Design System Redesign
+ * 
+ * Clean data-focused interface
+ * Professional admin panel aesthetic
+ */
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import LogoutButton from '@/components/LogoutButton';
-import api from '@/lib/api';
+'use client'
 
-interface TestSubmission {
-    _id: string;
-    testId: {
-        title: string;
-        field: string;
-        testLevel: string;
-    };
-    freelancerId: {
-        _id: string;
-        fullName: string;
-        email: string;
-    };
-    status: string;
-    createdAt: string;
-}
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import {
+    LayoutDashboard,
+    Users,
+    FileText,
+    DollarSign,
+    Settings,
+    Shield,
+    TrendingUp,
+    AlertCircle,
+    CheckCircle2
+} from 'lucide-react'
+import api from '@/lib/api'
+import { Sidebar } from '@/components/ui/sidebar'
+import { TopBar } from '@/components/ui/topbar'
+import { StatCard } from '@/components/ui/stat-card'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { SkeletonCard } from '@/components/ui/skeleton'
 
 export default function AdminDashboard() {
-    const [submissions, setSubmissions] = useState<TestSubmission[]>([]);
-    const [loading, setLoading] = useState(true);
+    const router = useRouter()
+    const [stats, setStats] = useState<any>(null)
+    const [pendingTests, setPendingTests] = useState<any[]>([])
+    const [recentFreelancers, setRecentFreelancers] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        loadSubmissions();
-    }, []);
+        loadData()
+    }, [])
 
-    const loadSubmissions = async () => {
+    const loadData = async () => {
         try {
-            const { data } = await api.get('/admin/submissions');
-            setSubmissions(data);
+            const [statsRes, testsRes, freelancersRes] = await Promise.all([
+                api.get('/admin/stats'),
+                api.get('/admin/test-submissions?status=SUBMITTED'),
+                api.get('/admin/freelancers?limit=5'),
+            ])
+
+            setStats(statsRes.data)
+            setPendingTests(testsRes.data)
+            setRecentFreelancers(freelancersRes.data)
         } catch (error) {
-            console.error('Error loading submissions:', error);
+            console.error('Error loading data:', error)
         } finally {
-            setLoading(false);
+            setLoading(false)
         }
-    };
+    }
+
+    const navItems = [
+        { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+        { label: 'Freelancers', href: '/admin/dashboard/freelancers', icon: Users },
+        { label: 'Test Review', href: '/admin/dashboard/test-review', icon: FileText, badge: pendingTests.length },
+        { label: 'Pricing', href: '/admin/pricing', icon: DollarSign },
+        { label: 'Settings', href: '/admin/settings', icon: Settings },
+    ]
 
     if (loading) {
-        return <div className="container mx-auto py-8">Loading...</div>;
+        return (
+            <div className="flex h-screen">
+                <Sidebar
+                    logo={<div className="flex items-center gap-2"><Shield className="h-5 w-5 text-primary" /><span className="text-xl font-bold text-primary">Admin</span></div>}
+                    items={navItems}
+                />
+                <div className="flex-1">
+                    <TopBar title="Admin Dashboard" />
+                    <main className="container-custom py-8">
+                        <div className="grid grid-cols-4 gap-6">
+                            <SkeletonCard />
+                            <SkeletonCard />
+                            <SkeletonCard />
+                            <SkeletonCard />
+                        </div>
+                    </main>
+                </div>
+            </div>
+        )
     }
 
     return (
-        <div className="container mx-auto py-8">
-            <div className="mb-8 flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-                    <p className="text-muted-foreground">
-                        Manage test submissions and platform settings
-                    </p>
-                </div>
-                <div className="flex gap-2">
-                    <Link href="/admin/pricing">
-                        <Button variant="outline">💰 Pricing Management</Button>
-                    </Link>
-                    <LogoutButton />
-                </div>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-sm">Total Submissions</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-3xl font-bold">{submissions.length}</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-sm">Pending Review</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-3xl font-bold text-yellow-600">
-                            {submissions.filter(s => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW').length}
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-sm">Approved</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-3xl font-bold text-green-600">
-                            {submissions.filter(s => s.status === 'REVIEWED').length}
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Recent Submissions */}
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Recent Test Submissions</CardTitle>
-                        <CardDescription>Latest freelancer test submissions awaiting review</CardDescription>
+        <div className="flex h-screen bg-background">
+            {/* Sidebar */}
+            <Sidebar
+                logo={
+                    <div className="flex items-center gap-2">
+                        <Shield className="h-5 w-5 text-primary" />
+                        <span className="text-xl font-bold text-primary">Admin</span>
                     </div>
-                    <Link href="/admin/dashboard/assignments">
-                        <Button variant="outline">See All Submissions</Button>
-                    </Link>
-                </CardHeader>
-                <CardContent>
-                    {submissions.length === 0 ? (
-                        <p className="text-center text-muted-foreground py-8">No submissions yet</p>
-                    ) : (
-                        <div className="space-y-4">
-                            {submissions.slice(0, 5).map((submission) => (
-                                <div key={submission._id} className="flex justify-between items-center p-4 border rounded-lg">
-                                    <div className="flex-1">
-                                        <p className="font-semibold">{submission.freelancerId.fullName}</p>
-                                        <p className="text-sm text-muted-foreground">{submission.testId.title}</p>
-                                        <p className="text-xs text-muted-foreground">{submission.testId.field}</p>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <Badge variant={
-                                            submission.status === 'REVIEWED' ? 'default' :
-                                                submission.status === 'SUBMITTED' ? 'secondary' :
-                                                    submission.status === 'UNDER_REVIEW' ? 'secondary' : 'destructive'
-                                        }>
-                                            {submission.status}
-                                        </Badge>
-                                    </div>
-                                </div>
-                            ))}
+                }
+                items={navItems}
+                footer={
+                    <Button
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={() => {
+                            localStorage.removeItem('token')
+                            router.push('/')
+                        }}
+                    >
+                        Logout
+                    </Button>
+                }
+            />
+
+            {/* Main Content */}
+            <div className="flex flex-1 flex-col overflow-hidden">
+                <TopBar
+                    title="Admin Dashboard"
+                    subtitle="Platform Overview"
+                    user={{
+                        name: 'Admin',
+                    }}
+                />
+
+                <main className="flex-1 overflow-y-auto">
+                    <div className="container-custom py-8 space-y-8">
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+                            <StatCard
+                                title="Total Freelancers"
+                                value={stats?.totalFreelancers || 0}
+                                description={`${stats?.approvedFreelancers || 0} approved`}
+                                icon={Users}
+                            />
+                            <StatCard
+                                title="Pending Tests"
+                                value={pendingTests.length}
+                                description="Awaiting review"
+                                icon={FileText}
+                            />
+                            <StatCard
+                                title="Active Projects"
+                                value={stats?.activeProjects || 0}
+                                description="In progress"
+                                icon={TrendingUp}
+                            />
+                            <StatCard
+                                title="Total Revenue"
+                                value="$0"
+                                description="This month"
+                                icon={DollarSign}
+                            />
                         </div>
-                    )}
-                </CardContent>
-            </Card>
+
+                        {/* Pending Test Reviews */}
+                        {pendingTests.length > 0 && (
+                            <div>
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h2 className="text-2xl font-semibold text-neutral-900">Pending Test Reviews</h2>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => router.push('/admin/dashboard/test-review')}
+                                    >
+                                        View All
+                                    </Button>
+                                </div>
+
+                                <div className="grid gap-4">
+                                    {pendingTests.slice(0, 3).map((test: any) => (
+                                        <Card key={test._id} hover>
+                                            <CardContent className="flex items-center justify-between p-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-warning-50">
+                                                        <AlertCircle className="h-5 w-5 text-warning-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium text-neutral-900">
+                                                            {test.freelancerId?.name || 'Unknown'} - {test.testId?.field || 'Test'}
+                                                        </p>
+                                                        <p className="text-sm text-neutral-600">
+                                                            Submitted {new Date(test.submittedAt).toLocaleDateString()} • {test.testId?.testLevel} Level
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => router.push(`/admin/dashboard/test-review/${test._id}`)}
+                                                >
+                                                    Review
+                                                </Button>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Recent Freelancers */}
+                        {recentFreelancers.length > 0 && (
+                            <div>
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h2 className="text-2xl font-semibold text-neutral-900">Recent Freelancers</h2>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => router.push('/admin/dashboard/freelancers')}
+                                    >
+                                        View All
+                                    </Button>
+                                </div>
+
+                                <div className="grid gap-4">
+                                    {recentFreelancers.map((freelancer: any) => (
+                                        <Card key={freelancer._id}>
+                                            <CardContent className="flex items-center justify-between p-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-50">
+                                                        <Users className="h-5 w-5 text-primary-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium text-neutral-900">{freelancer.name}</p>
+                                                        <p className="text-sm text-neutral-600">
+                                                            {freelancer.education?.field || 'No field'} • {freelancer.education?.degree || 'No degree'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <Badge variant={
+                                                    freelancer.status === 'APPROVED' ? 'success' :
+                                                        freelancer.status === 'REJECTED' ? 'error' :
+                                                            'warning'
+                                                }>
+                                                    {freelancer.status}
+                                                </Badge>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </main>
+            </div>
         </div>
-    );
+    )
 }

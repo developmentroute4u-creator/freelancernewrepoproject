@@ -353,6 +353,13 @@ function SkillTestPage() {
     }
   };
 
+  // If retesting, show the test directly
+  useEffect(() => {
+    if (isRetest && retestTest) {
+      setTests([retestTest]);
+    }
+  }, [isRetest, retestTest]);
+
   if (!freelancer) {
     return (
       <div className="container mx-auto py-8 max-w-4xl">
@@ -385,13 +392,6 @@ function SkillTestPage() {
       </div>
     );
   }
-
-  // If retesting, show the test directly
-  useEffect(() => {
-    if (isRetest && retestTest) {
-      setTests([retestTest]);
-    }
-  }, [isRetest, retestTest]);
 
   return (
     <div className="container mx-auto py-8 max-w-4xl">

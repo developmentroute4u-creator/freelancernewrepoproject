@@ -1,24 +1,32 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-
 import { cn } from "@/lib/utils"
 
+/**
+ * BADGE COMPONENT - Premium Design System
+ * 
+ * Style:
+ * - Soft pill shape
+ * - Subtle backgrounds
+ * - Purpose-driven colors
+ */
+
 const badgeVariants = cva(
-    "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+    "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors",
     {
         variants: {
             variant: {
-                default:
-                    "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
-                secondary:
-                    "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-                destructive:
-                    "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-                outline: "text-foreground",
+                success: "bg-support-100 text-support-700 border border-support-200",
+                warning: "bg-warning-100 text-warning-700 border border-warning-200",
+                error: "bg-error-100 text-error-700 border border-error-200",
+                info: "bg-accent-100 text-accent-700 border border-accent-200",
+                neutral: "bg-neutral-100 text-neutral-700 border border-neutral-200",
+                primary: "bg-primary-100 text-primary-700 border border-primary-200",
+                outline: "border border-neutral-300 text-neutral-700 bg-transparent",
             },
         },
         defaultVariants: {
-            variant: "default",
+            variant: "neutral",
         },
     }
 )
