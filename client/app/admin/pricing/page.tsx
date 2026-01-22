@@ -355,7 +355,7 @@ export default function AdminPricingPage() {
                                         </div>
                                         <div>
                                             <p className="text-sm text-muted-foreground">Status</p>
-                                            <Badge variant={rule.isActive ? 'default' : 'secondary'}>
+                                            <Badge variant={rule.isActive ? 'success' : 'neutral'}>
                                                 {rule.isActive ? 'Active' : 'Inactive'}
                                             </Badge>
                                         </div>
@@ -432,7 +432,7 @@ export default function AdminPricingPage() {
                                 <CardContent>
                                     <div className="grid grid-cols-3 gap-4">
                                         <div className="text-center p-4 bg-gray-50 rounded-lg">
-                                            <Badge variant="secondary" className="mb-2">LOW</Badge>
+                                            <Badge variant="neutral" className="mb-2">LOW</Badge>
                                             <p className="text-2xl font-bold">{(metrics.acceptanceRates.LOW * 100).toFixed(1)}%</p>
                                         </div>
                                         <div className="text-center p-4 bg-blue-50 rounded-lg">
@@ -440,7 +440,7 @@ export default function AdminPricingPage() {
                                             <p className="text-2xl font-bold">{(metrics.acceptanceRates.MEDIUM * 100).toFixed(1)}%</p>
                                         </div>
                                         <div className="text-center p-4 bg-green-50 rounded-lg">
-                                            <Badge variant="default" className="mb-2 bg-green-600">HIGH</Badge>
+                                            <Badge variant="success" className="mb-2">HIGH</Badge>
                                             <p className="text-2xl font-bold">{(metrics.acceptanceRates.HIGH * 100).toFixed(1)}%</p>
                                         </div>
                                     </div>
