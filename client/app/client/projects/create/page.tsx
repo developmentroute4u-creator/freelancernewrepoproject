@@ -270,7 +270,7 @@ function CreateProjectContent() {
                         <Button
                           key={subField}
                           type="button"
-                          variant={isSelected ? 'default' : 'outline'}
+                          variant={isSelected ? 'solid' : 'outline'}
                           size="sm"
                           onClick={() => {
                             const current = form.watch('innerFields');
