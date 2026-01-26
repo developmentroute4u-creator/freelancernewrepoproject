@@ -201,8 +201,8 @@ export default function InvitationsPage() {
                                                     </p>
                                                 </div>
                                                 <Badge variant={
-                                                    invitation.status === 'ACCEPTED' ? 'default' :
-                                                        invitation.status === 'DECLINED' ? 'destructive' : 'secondary'
+                                                    invitation.status === 'ACCEPTED' ? 'success' :
+                                                        invitation.status === 'DECLINED' ? 'error' : 'neutral'
                                                 }>
                                                     {invitation.status}
                                                 </Badge>
