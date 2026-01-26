@@ -420,7 +420,7 @@ function SkillTestPage() {
                         <Checkbox
                           id={`field-${field}`}
                           checked={selectedFields.includes(field)}
-                          onCheckedChange={() => toggleField(field)}
+                          onChange={() => toggleField(field)}
                         />
                         <Label
                           htmlFor={`field-${field}`}
@@ -438,7 +438,7 @@ function SkillTestPage() {
                                 <Checkbox
                                   id={`innerField-${field}-${innerField}`}
                                   checked={(fieldInnerFields[field] || []).includes(innerField)}
-                                  onCheckedChange={() => toggleInnerField(field, innerField)}
+                                  onChange={() => toggleInnerField(field, innerField)}
                                 />
                                 <Label
                                   htmlFor={`innerField-${field}-${innerField}`}
