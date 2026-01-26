@@ -178,7 +178,7 @@ export default function ClientOnboarding() {
                     <Checkbox
                       id={field}
                       checked={selectedFields.includes(field)}
-                      onCheckedChange={() => toggleField(field)}
+                      onChange={() => toggleField(field)}
                     />
                     <label
                       htmlFor={field}
