@@ -117,7 +117,7 @@ export default function FindFreelancerPage() {
                                 <div className="flex items-start gap-4">
                                     <Checkbox
                                         checked={selectedIds.includes(freelancer._id)}
-                                        onCheckedChange={() => toggleSelection(freelancer._id)}
+                                        onChange={() => toggleSelection(freelancer._id)}
                                     />
                                     <div className="flex-1">
                                         <div className="flex justify-between items-start mb-2">
@@ -126,8 +126,8 @@ export default function FindFreelancerPage() {
                                                 <p className="text-sm text-muted-foreground">{freelancer.userId?.email}</p>
                                             </div>
                                             <Badge variant={
-                                                freelancer.badgeLevel === 'HIGH' ? 'default' :
-                                                    freelancer.badgeLevel === 'MEDIUM' ? 'secondary' : 'outline'
+                                                freelancer.badgeLevel === 'HIGH' ? 'primary' :
+                                                    freelancer.badgeLevel === 'MEDIUM' ? 'neutral' : 'outline'
                                             }>
                                                 {freelancer.badgeLevel} Level
                                             </Badge>
