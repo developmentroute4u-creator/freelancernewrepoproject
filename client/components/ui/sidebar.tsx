@@ -16,6 +16,7 @@ interface NavItem {
     href: string
     icon: LucideIcon
     badge?: string | number
+    disabled?: boolean
 }
 
 interface SidebarProps {
@@ -41,6 +42,23 @@ export function Sidebar({ logo, items, footer }: SidebarProps) {
                 {items.map((item) => {
                     const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
                     const Icon = item.icon
+
+                    if (item.disabled) {
+                        return (
+                            <div
+                                key={item.href}
+                                className="group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium opacity-50 cursor-not-allowed"
+                            >
+                                <Icon className="h-5 w-5 text-neutral-400" />
+                                <span className="flex-1 text-neutral-500">{item.label}</span>
+                                {item.badge && (
+                                    <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700">
+                                        {item.badge}
+                                    </span>
+                                )}
+                            </div>
+                        )
+                    }
 
                     return (
                         <Link

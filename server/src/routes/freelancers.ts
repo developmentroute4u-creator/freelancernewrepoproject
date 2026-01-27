@@ -281,6 +281,23 @@ router.get('/tests/submissions', authorize(UserRole.FREELANCER), async (req: Aut
   }
 });
 
+// Alias route for dashboard compatibility
+router.get('/test-submissions', authorize(UserRole.FREELANCER), async (req: AuthRequest, res) => {
+  try {
+    const freelancer = await Freelancer.findOne({ userId: req.userId });
+    if (!freelancer) {
+      return res.status(404).json({ error: 'Freelancer profile not found' });
+    }
+
+    const submissions = await TestSubmission.find({ freelancerId: freelancer._id })
+      .populate('testId')
+      .sort({ createdAt: -1 });
+    res.json(submissions);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Client: Search freelancers
 router.get('/search', authorize(UserRole.CLIENT, UserRole.ADMIN), async (req: AuthRequest, res) => {
   try {

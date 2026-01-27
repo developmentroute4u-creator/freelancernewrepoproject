@@ -44,6 +44,37 @@ export default function FreelancerDashboard() {
     loadData()
   }, [])
 
+  // Enforce test completion before dashboard access
+  useEffect(() => {
+    if (!loading && freelancer) {
+      // Check if freelancer has completed and passed a test (has badgeLevel)
+      if (!freelancer.badgeLevel) {
+        // Handle different statuses
+        if (freelancer.status === 'PENDING') {
+          // Freelancer hasn't completed onboarding
+          router.push('/freelancer/onboarding')
+          return
+        }
+
+        if (freelancer.status === 'REJECTED') {
+          // Freelancer's test was rejected, redirect to test page for retake
+          router.push('/freelancer/test')
+          return
+        }
+
+        if (freelancer.status === 'UNDER_REVIEW') {
+          // Test submitted but not yet reviewed - allow dashboard access with banner
+          // Don't redirect, just show a banner (handled in the UI below)
+          return
+        }
+
+        // No badge and not under review = needs to take test
+        router.push('/freelancer/test')
+        return
+      }
+    }
+  }, [freelancer, loading, router])
+
   const loadData = async () => {
     try {
       const [freelancerRes, projectsRes, submissionsRes, invitationsRes] = await Promise.all([
@@ -68,7 +99,13 @@ export default function FreelancerDashboard() {
     { label: 'Dashboard', href: '/freelancer/dashboard', icon: LayoutDashboard },
     { label: 'Projects', href: '/freelancer/projects', icon: Briefcase, badge: projects.length },
     { label: 'Invitations', href: '/freelancer/invitations', icon: Mail, badge: invitations.length },
-    { label: 'Test', href: '/freelancer/test', icon: FileText },
+    {
+      label: 'Test',
+      href: '/freelancer/test',
+      icon: FileText,
+      disabled: freelancer?.status === 'UNDER_REVIEW' && !freelancer?.badgeLevel,
+      badge: freelancer?.status === 'UNDER_REVIEW' && !freelancer?.badgeLevel ? 'REVIEW' : undefined
+    },
     { label: 'Settings', href: '/freelancer/settings', icon: Settings },
   ]
 
@@ -134,6 +171,61 @@ export default function FreelancerDashboard() {
 
         <main className="flex-1 overflow-y-auto">
           <div className="container-custom py-8 space-y-8">
+            {/* Under Review Status - Prominent Display */}
+            {freelancer?.status === 'UNDER_REVIEW' && !freelancer?.badgeLevel && (
+              <Card className="border-2 border-yellow-400 bg-yellow-50">
+                <CardHeader>
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0">
+                      <div className="h-12 w-12 rounded-full bg-yellow-400 flex items-center justify-center">
+                        <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <CardTitle className="text-xl text-yellow-900">Test Under Review</CardTitle>
+                        <Badge className="bg-yellow-500 text-white hover:bg-yellow-600">PENDING REVIEW</Badge>
+                      </div>
+                      <CardDescription className="text-yellow-800 text-base">
+                        Your skill test submission is currently being reviewed by our admin team.
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="bg-white rounded-lg p-4 border border-yellow-200">
+                    <h4 className="font-semibold text-yellow-900 mb-2">What happens next?</h4>
+                    <ul className="space-y-2 text-sm text-yellow-800">
+                      <li className="flex items-start gap-2">
+                        <span className="text-yellow-500 mt-0.5">•</span>
+                        <span>Our admin will review your test submission and evaluate your work</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-yellow-500 mt-0.5">•</span>
+                        <span>If <strong>approved</strong>, you'll receive a badge and gain full access to projects</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-yellow-500 mt-0.5">•</span>
+                        <span>If <strong>rejected</strong>, you can retake the same test or choose a lower difficulty level</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-yellow-500 mt-0.5">•</span>
+                        <span><strong>You cannot take a new test</strong> while your current submission is under review</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-yellow-700">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Review typically takes 1-2 business days. You'll be notified once complete.</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Badge Section */}
             <BadgeDisplay
               level={freelancer?.badgeLevel}

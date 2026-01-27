@@ -140,38 +140,16 @@ export default function FreelancerOnboarding() {
       router.push('/auth/signin');
     }
 
-    // Check if profile already exists and load data
+    // Check if profile already exists - if so, redirect to dashboard
+    // Since new signup flow includes all data collection, onboarding is no longer needed
     const loadExistingProfile = async () => {
       try {
         const { data: freelancer } = await api.get('/freelancers/me');
 
-        // If profile exists, populate forms and navigate to appropriate tab
+        // If profile exists, redirect to dashboard
         if (freelancer) {
-          // Populate personal details
-          personalForm.setValue('fullName', freelancer.fullName || '');
-          personalForm.setValue('mobileNumber', freelancer.mobileNumber || '');
-          personalForm.setValue('yearsOfExperience', freelancer.yearsOfExperience);
-          personalForm.setValue('location', freelancer.location || '');
-          personalForm.setValue('expectedComfortRangeMin', freelancer.expectedComfortRangeMin);
-          personalForm.setValue('expectedComfortRangeMax', freelancer.expectedComfortRangeMax);
-          personalForm.setValue('availability', freelancer.availability);
-
-          // If education exists, populate and move to portfolio tab
-          if (freelancer.education) {
-            educationForm.setValue('universityName', freelancer.education.universityName || '');
-            educationForm.setValue('degree', freelancer.education.degree || '');
-
-            // If portfolio URLs exist, move to portfolio tab
-            if (freelancer.portfolioUrls && freelancer.portfolioUrls.length > 0) {
-              portfolioForm.setValue('portfolioUrls', freelancer.portfolioUrls);
-              setActiveTab('portfolio');
-            } else {
-              setActiveTab('portfolio');
-            }
-          } else {
-            // Education not filled, move to education tab
-            setActiveTab('education');
-          }
+          router.push('/freelancer/dashboard');
+          return;
         }
       } catch (error: any) {
         // Profile doesn't exist yet, that's okay - user will create it
