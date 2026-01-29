@@ -82,7 +82,7 @@ export default function FreelancerProjectsPage() {
                                                     </CardDescription>
                                                 </div>
                                                 <div className="flex gap-2">
-                                                    <Badge variant={project.state === 'ACTIVE' ? 'default' : 'secondary'}>
+                                                    <Badge variant={project.state === 'ACTIVE' ? 'primary' : 'neutral'}>
                                                         {project.state}
                                                     </Badge>
                                                     <Badge variant="outline">
