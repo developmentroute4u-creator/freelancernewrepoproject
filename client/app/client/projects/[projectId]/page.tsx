@@ -162,7 +162,7 @@ export default function ProjectDetailPage() {
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium">Status</p>
-                                    <Badge variant={project.state === 'ACTIVE' ? 'default' : 'secondary'}>
+                                    <Badge variant={project.state === 'ACTIVE' ? 'primary' : 'neutral'}>
                                         {project.state}
                                     </Badge>
                                 </div>
@@ -206,7 +206,7 @@ export default function ProjectDetailPage() {
                                                     <div className="flex items-start gap-4">
                                                         <Checkbox
                                                             checked={selectedIds.includes(freelancer._id)}
-                                                            onCheckedChange={() => toggleSelection(freelancer._id)}
+                                                            onChange={() => toggleSelection(freelancer._id)}
                                                         />
                                                         <div className="flex-1">
                                                             <div className="flex justify-between items-start mb-2">
@@ -215,8 +215,8 @@ export default function ProjectDetailPage() {
                                                                     <p className="text-sm text-muted-foreground">{freelancer.userId?.email}</p>
                                                                 </div>
                                                                 <Badge variant={
-                                                                    freelancer.badgeLevel === 'HIGH' ? 'default' :
-                                                                        freelancer.badgeLevel === 'MEDIUM' ? 'secondary' : 'outline'
+                                                                    freelancer.badgeLevel === 'HIGH' ? 'primary' :
+                                                                        freelancer.badgeLevel === 'MEDIUM' ? 'neutral' : 'outline'
                                                                 }>
                                                                     {freelancer.badgeLevel} Level
                                                                 </Badge>
@@ -296,7 +296,7 @@ export default function ProjectDetailPage() {
                                 <CardDescription>View and manage your project</CardDescription>
                             </div>
                             <div className="flex gap-2">
-                                <Badge variant={project.state === 'ACTIVE' ? 'default' : 'secondary'}>
+                                <Badge variant={project.state === 'ACTIVE' ? 'primary' : 'neutral'}>
                                     {project.state}
                                 </Badge>
                                 <Badge variant="outline">

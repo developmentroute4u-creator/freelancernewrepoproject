@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 
 interface LogoutButtonProps {
-    variant?: 'default' | 'outline' | 'ghost';
-    size?: 'default' | 'sm' | 'lg' | 'icon';
+    variant?: 'solid' | 'outline' | 'ghost';
+    size?: 'sm' | 'md' | 'lg' | 'icon';
     className?: string;
 }
 
-export default function LogoutButton({ variant = 'outline', size = 'default', className }: LogoutButtonProps) {
+export default function LogoutButton({ variant = 'outline', size = 'md', className }: LogoutButtonProps) {
     const router = useRouter();
 
     const handleLogout = () => {
