@@ -201,7 +201,7 @@ export default function FreelancerTestPage() {
                         You can retake the test at a lower level
                       </p>
                     </div>
-                    <Badge variant="destructive" className="ml-auto">
+                    <Badge variant="error" className="ml-auto">
                       REJECTED
                     </Badge>
                   </div>
