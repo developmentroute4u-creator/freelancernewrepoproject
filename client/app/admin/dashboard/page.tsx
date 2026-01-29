@@ -177,10 +177,13 @@ export default function AdminDashboard() {
                                                     </div>
                                                     <div>
                                                         <p className="font-medium text-neutral-900">
-                                                            {test.freelancerId?.name || 'Unknown'} - {test.testId?.field || 'Test'}
+                                                            {test.freelancerId?.fullName || 'Unknown'}
                                                         </p>
                                                         <p className="text-sm text-neutral-600">
-                                                            Submitted {new Date(test.submittedAt).toLocaleDateString()} • {test.testId?.testLevel} Level
+                                                            {test.testId?.field || 'Unknown Field'} • {test.testId?.testLevel || 'N/A'} Level
+                                                        </p>
+                                                        <p className="text-xs text-neutral-500">
+                                                            Submitted {new Date(test.submittedAt).toLocaleDateString()}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -221,19 +224,45 @@ export default function AdminDashboard() {
                                                         <Users className="h-5 w-5 text-primary-600" />
                                                     </div>
                                                     <div>
-                                                        <p className="font-medium text-neutral-900">{freelancer.name}</p>
+                                                        <p className="font-medium text-neutral-900">
+                                                            {freelancer.fullName || 'Unknown'}
+                                                        </p>
                                                         <p className="text-sm text-neutral-600">
                                                             {freelancer.education?.field || 'No field'} • {freelancer.education?.degree || 'No degree'}
                                                         </p>
+                                                        <p className="text-xs text-neutral-500">
+                                                            {freelancer.education?.universityName || 'No university'}
+                                                        </p>
+                                                        <div className="flex items-center gap-3 mt-1 text-xs text-neutral-500">
+                                                            {freelancer.userId?.email && (
+                                                                <span>📧 {freelancer.userId.email}</span>
+                                                            )}
+                                                            {freelancer.location && (
+                                                                <span>📍 {freelancer.location}</span>
+                                                            )}
+                                                            {freelancer.yearsOfExperience && (
+                                                                <span>💼 {freelancer.yearsOfExperience} yrs exp</span>
+                                                            )}
+                                                            {freelancer.hourlyRate && (
+                                                                <span>💰 ₹{freelancer.hourlyRate}/hr</span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <Badge variant={
-                                                    freelancer.status === 'APPROVED' ? 'success' :
-                                                        freelancer.status === 'REJECTED' ? 'error' :
-                                                            'warning'
-                                                }>
-                                                    {freelancer.status}
-                                                </Badge>
+                                                <div className="flex items-center gap-2">
+                                                    {freelancer.badgeLevel && (
+                                                        <Badge variant="outline" className="text-xs">
+                                                            {freelancer.badgeLevel} Badge
+                                                        </Badge>
+                                                    )}
+                                                    <Badge variant={
+                                                        freelancer.status === 'APPROVED' ? 'success' :
+                                                            freelancer.status === 'REJECTED' ? 'error' :
+                                                                'warning'
+                                                    }>
+                                                        {freelancer.status}
+                                                    </Badge>
+                                                </div>
                                             </CardContent>
                                         </Card>
                                     ))}

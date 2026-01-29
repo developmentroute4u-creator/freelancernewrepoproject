@@ -16,6 +16,26 @@ const router = express.Router();
 router.use(authenticate);
 router.use(authorize(UserRole.ADMIN));
 
+// Get admin dashboard stats
+router.get('/stats', async (req: AuthRequest, res) => {
+  try {
+    const [totalFreelancers, approvedFreelancers, activeProjects] = await Promise.all([
+      Freelancer.countDocuments(),
+      Freelancer.countDocuments({ status: FreelancerStatus.APPROVED }),
+      Project.countDocuments({ state: ProjectState.ACTIVE }),
+    ]);
+
+    res.json({
+      totalFreelancers,
+      approvedFreelancers,
+      activeProjects,
+    });
+  } catch (error: any) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
 // Get all test submissions for admin dashboard
 router.get('/submissions', async (req: AuthRequest, res) => {
   try {
@@ -59,7 +79,20 @@ router.get('/test-submissions', async (req: AuthRequest, res) => {
       })
       .sort({ createdAt: -1 });
 
-    res.json(submissions);
+    // Filter out submissions where freelancer already has an immutable badge
+    // This prevents showing already-reviewed submissions in the pending list
+    const freelancerIds = submissions.map(s => s.freelancerId?._id).filter(Boolean);
+    const freelancersWithBadges = await Badge.find({
+      freelancerId: { $in: freelancerIds },
+      isImmutable: true
+    }).distinct('freelancerId');
+
+    const filteredSubmissions = submissions.filter(submission => {
+      const freelancerId = submission.freelancerId?._id?.toString();
+      return !freelancersWithBadges.some(badgedId => badgedId.toString() === freelancerId);
+    });
+
+    res.json(filteredSubmissions);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -84,7 +117,7 @@ router.post('/test-submissions/:submissionId/review', async (req: AuthRequest, r
 
     if (existingBadge) {
       return res.status(400).json({
-        error: 'This freelancer already has an immutable badge and cannot be re-badged. Badges are permanent once awarded.'
+        error: 'This freelancer has already been approved and awarded a badge. Badges are permanent and cannot be changed. This submission should not appear in the pending review list - please refresh the page.'
       });
     }
 
@@ -376,15 +409,21 @@ router.get('/freelancers/:freelancerId', async (req: AuthRequest, res) => {
 // Get all freelancers
 router.get('/freelancers', async (req: AuthRequest, res) => {
   try {
-    const { status } = req.query;
+    const { status, limit } = req.query;
     const query: any = {};
     if (status) {
       query.status = status;
     }
 
-    const freelancers = await Freelancer.find(query)
+    let freelancersQuery = Freelancer.find(query)
       .populate('userId', 'email')
       .sort({ createdAt: -1 });
+
+    if (limit) {
+      freelancersQuery = freelancersQuery.limit(parseInt(limit as string));
+    }
+
+    const freelancers = await freelancersQuery;
 
     res.json(freelancers);
   } catch (error: any) {

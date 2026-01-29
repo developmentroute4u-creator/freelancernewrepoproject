@@ -91,6 +91,20 @@ function CreateProjectContent() {
   const [selectedAccountabilityMode, setSelectedAccountabilityMode] = useState<'ACCOUNTABILITY' | 'BASIC' | null>(null);
   const [projectName, setProjectName] = useState<string>('');
 
+  useEffect(() => {
+    checkClientProfile();
+  }, []);
+
+  const checkClientProfile = async () => {
+    try {
+      await api.get('/clients/me');
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        router.push('/client/onboarding');
+      }
+    }
+  };
+
   const form = useForm<IntentForm>({
     resolver: zodResolver(intentSchema),
     defaultValues: {
@@ -191,8 +205,10 @@ function CreateProjectContent() {
 
     setLoading(true);
     try {
+      console.log('🔄 Locking scope:', generatedScope._id, 'Mode:', selectedScopeMode);
       await api.post(`/scopes/${generatedScope._id}/lock`, { scopeMode: selectedScopeMode });
 
+      console.log('🔄 Creating project:', projectName, 'Accountability:', selectedAccountabilityMode);
       // Create project
       const { data: project } = await api.post('/projects', {
         name: projectName,
@@ -200,11 +216,13 @@ function CreateProjectContent() {
         accountabilityMode: selectedAccountabilityMode
       });
 
+      console.log('✅ Project created successfully:', project._id);
       // Redirect to find freelancer page
       router.push(`/client/projects/${project._id}/find-freelancer`);
-    } catch (error) {
-      console.error('Error locking scope:', error);
-      alert('Failed to lock scope. Please try again.');
+    } catch (error: any) {
+      console.error('Detailed error in confirmAndLockScope:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to complete project setup. Please try again.';
+      alert(`Setup Error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -270,8 +288,13 @@ function CreateProjectContent() {
                         <Button
                           key={subField}
                           type="button"
-                          variant={isSelected ? 'default' : 'outline'}
+                          variant={isSelected ? 'solid' : 'outline'}
                           size="sm"
+                          className={
+                            isSelected
+                              ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
+                              : 'border-gray-300 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700'
+                          }
                           onClick={() => {
                             const current = form.watch('innerFields');
                             const updated = isSelected
@@ -493,23 +516,21 @@ function CreateProjectContent() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-3 gap-4">
                       {/* LOW Tier */}
-                      <div className={`p-4 rounded-lg border-2 ${
-                        generatedScope.pricing.breakdown?.recommended === 'LOW' 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200'
-                      }`}>
+                      <div className={`p-4 rounded-lg border-2 ${generatedScope.pricing.breakdown?.recommended === 'LOW'
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-gray-200'
+                        }`}>
                         <p className="text-xs text-muted-foreground mb-1">LOW</p>
                         <p className="text-2xl font-bold text-gray-700">
                           ₹{generatedScope.pricing.tiers.low.toLocaleString()}
                         </p>
                       </div>
-                      
+
                       {/* MEDIUM Tier (Recommended) */}
-                      <div className={`p-4 rounded-lg border-2 ${
-                        generatedScope.pricing.breakdown?.recommended === 'MEDIUM' 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200'
-                      }`}>
+                      <div className={`p-4 rounded-lg border-2 ${generatedScope.pricing.breakdown?.recommended === 'MEDIUM'
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-gray-200'
+                        }`}>
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-xs text-muted-foreground">MEDIUM</p>
                           {generatedScope.pricing.breakdown?.recommended === 'MEDIUM' && (
@@ -520,20 +541,19 @@ function CreateProjectContent() {
                           ₹{generatedScope.pricing.tiers.medium.toLocaleString()}
                         </p>
                       </div>
-                      
+
                       {/* HIGH Tier */}
-                      <div className={`p-4 rounded-lg border-2 ${
-                        generatedScope.pricing.breakdown?.recommended === 'HIGH' 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200'
-                      }`}>
+                      <div className={`p-4 rounded-lg border-2 ${generatedScope.pricing.breakdown?.recommended === 'HIGH'
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-gray-200'
+                        }`}>
                         <p className="text-xs text-muted-foreground mb-1">HIGH</p>
                         <p className="text-2xl font-bold text-gray-700">
                           ₹{generatedScope.pricing.tiers.high.toLocaleString()}
                         </p>
                       </div>
                     </div>
-                    
+
                     {/* Breakdown */}
                     {generatedScope.pricing.breakdown && (
                       <div className="mt-4 p-4 bg-blue-50 rounded-lg space-y-2">
@@ -549,7 +569,7 @@ function CreateProjectContent() {
                         </p>
                       </div>
                     )}
-                    
+
                     <div className="mt-4 text-xs text-center text-muted-foreground">
                       This is a fixed price. You can accept, reduce scope, or cancel.
                     </div>

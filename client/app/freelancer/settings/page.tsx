@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Sidebar } from '@/components/ui/sidebar'
 import { TopBar } from '@/components/ui/topbar'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { LayoutDashboard, Briefcase, Mail, FileText, Settings } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Mail, Settings } from 'lucide-react'
 import api from '@/lib/api'
 
 export default function FreelancerSettingsPage() {
@@ -97,7 +97,6 @@ export default function FreelancerSettingsPage() {
         { label: 'Dashboard', href: '/freelancer/dashboard', icon: LayoutDashboard },
         { label: 'Projects', href: '/freelancer/projects', icon: Briefcase },
         { label: 'Invitations', href: '/freelancer/invitations', icon: Mail },
-        { label: 'Test', href: '/freelancer/test', icon: FileText },
         { label: 'Settings', href: '/freelancer/settings', icon: Settings },
     ]
 

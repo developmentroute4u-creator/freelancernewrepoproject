@@ -42,7 +42,7 @@ router.post('/', authorize(UserRole.FREELANCER), async (req: AuthRequest, res) =
       availability,
       education: education || undefined,
       portfolioUrls: portfolioUrls || [],
-      status: FreelancerStatus.PENDING,
+      status: FreelancerStatus.UNDER_REVIEW, // New freelancers start in UNDER_REVIEW status
     });
 
     await logAudit({
@@ -128,6 +128,42 @@ router.post('/tests/generate', authorize(UserRole.FREELANCER), async (req: AuthR
     const freelancer = await Freelancer.findOne({ userId: req.userId });
     if (!freelancer) {
       return res.status(404).json({ error: 'Freelancer profile not found' });
+    }
+
+    // PROGRESSIVE BADGE TESTING: Check if freelancer has an approved badge
+    // If approved, they can ONLY take the next higher level test
+    if (freelancer.status === FreelancerStatus.APPROVED && freelancer.badgeLevel) {
+      const levelHierarchy: Record<string, number> = { LOW: 1, MEDIUM: 2, HIGH: 3 };
+      const currentBadgeLevel = levelHierarchy[freelancer.badgeLevel];
+      const requestedLevel = levelHierarchy[testLevel];
+
+      // Check if trying to take same or lower level
+      if (requestedLevel <= currentBadgeLevel) {
+        return res.status(400).json({
+          error: `You already have a ${freelancer.badgeLevel} badge. You can only take the next higher level test.`,
+          currentBadge: freelancer.badgeLevel,
+          allowedLevel: freelancer.badgeLevel === 'LOW' ? 'MEDIUM' : freelancer.badgeLevel === 'MEDIUM' ? 'HIGH' : null
+        });
+      }
+
+      // Check if trying to skip a level (e.g., LOW badge trying HIGH test)
+      if (requestedLevel > currentBadgeLevel + 1) {
+        const nextLevel = currentBadgeLevel === 1 ? 'MEDIUM' : 'HIGH';
+        return res.status(400).json({
+          error: `You have a ${freelancer.badgeLevel} badge. You must take the ${nextLevel} level test next.`,
+          currentBadge: freelancer.badgeLevel,
+          requiredNextLevel: nextLevel
+        });
+      }
+
+      // Check if already at max level (HIGH badge)
+      if (freelancer.badgeLevel === 'HIGH') {
+        return res.status(400).json({
+          error: 'You have reached the maximum badge level (HIGH). No more tests are available.',
+          currentBadge: 'HIGH',
+          maxLevelReached: true
+        });
+      }
     }
 
     // Check if freelancer has been rejected and validate test level

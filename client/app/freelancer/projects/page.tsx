@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Sidebar } from '@/components/ui/sidebar'
 import { TopBar } from '@/components/ui/topbar'
-import { LayoutDashboard, Briefcase, Mail, FileText, Settings } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Mail, Settings } from 'lucide-react'
 import api from '@/lib/api'
 
 export default function FreelancerProjectsPage() {
@@ -21,7 +21,7 @@ export default function FreelancerProjectsPage() {
 
     const loadProjects = async () => {
         try {
-            const { data } = await api.get('/projects/freelancer')
+            const { data } = await api.get('/projects')
             setProjects(data || [])
         } catch (error) {
             console.error('Error loading projects:', error)
@@ -34,7 +34,6 @@ export default function FreelancerProjectsPage() {
         { label: 'Dashboard', href: '/freelancer/dashboard', icon: LayoutDashboard },
         { label: 'Projects', href: '/freelancer/projects', icon: Briefcase, badge: projects.length },
         { label: 'Invitations', href: '/freelancer/invitations', icon: Mail },
-        { label: 'Test', href: '/freelancer/test', icon: FileText },
         { label: 'Settings', href: '/freelancer/settings', icon: Settings },
     ]
 

@@ -48,9 +48,9 @@ router.post('/generate', authorize(UserRole.CLIENT), async (req: AuthRequest, re
     const assumptionsArray = Array.isArray(generatedScope.assumptions)
       ? generatedScope.assumptions
       : [
-          ...(generatedScope.assumptions?.technical || []),
-          ...(generatedScope.assumptions?.nonTechnical || [])
-        ];
+        ...(generatedScope.assumptions?.technical || []),
+        ...(generatedScope.assumptions?.nonTechnical || [])
+      ];
 
     const scope = await Scope.create({
       field,
@@ -129,8 +129,13 @@ router.post('/:scopeId/lock', authorize(UserRole.CLIENT), async (req: AuthReques
     }
 
     if (scope.isLocked) {
-      console.error('❌ Scope already locked:', scopeId);
-      return res.status(400).json({ error: 'Scope is already locked' });
+      // If already locked to the same mode, treat as success
+      if (scope.scopeMode === scopeMode) {
+        console.log('ℹ️ Scope already locked to this mode, proceeding:', scopeId);
+        return res.json(scope);
+      }
+      console.error('❌ Scope already locked to different mode:', scopeId, { currentMode: scope.scopeMode, requestedMode: scopeMode });
+      return res.status(400).json({ error: 'Scope is already locked to a different mode' });
     }
 
     scope.scopeMode = scopeMode;
@@ -229,9 +234,9 @@ router.post('/:scopeId/refresh', authorize(UserRole.CLIENT), async (req: AuthReq
     const assumptionsArray = Array.isArray(generatedScope.assumptions)
       ? generatedScope.assumptions
       : [
-          ...(generatedScope.assumptions?.technical || []),
-          ...(generatedScope.assumptions?.nonTechnical || [])
-        ];
+        ...(generatedScope.assumptions?.technical || []),
+        ...(generatedScope.assumptions?.nonTechnical || [])
+      ];
 
     // Update scope with new generated content (SOW Structure)
     scope.projectOverview = generatedScope.projectOverview;

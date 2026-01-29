@@ -94,7 +94,7 @@ const FreelancerSchema = new Schema<IFreelancer>(
     status: {
       type: String,
       enum: Object.values(FreelancerStatus),
-      default: FreelancerStatus.PENDING,
+      default: FreelancerStatus.UNDER_REVIEW, // New freelancers start in UNDER_REVIEW status
     },
   },
   {

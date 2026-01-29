@@ -44,13 +44,17 @@ export default function ClientDashboard() {
     try {
       const [clientRes, projectsRes] = await Promise.all([
         api.get('/clients/me'),
-        api.get('/projects/client'),
+        api.get('/projects'),
       ])
 
       setClient(clientRes.data)
       setProjects(projectsRes.data)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading data:', error)
+      // If client profile is not found, redirect to onboarding
+      if (error.response?.status === 404 && error.config.url.includes('/clients/me')) {
+        router.push('/client/onboarding')
+      }
     } finally {
       setLoading(false)
     }

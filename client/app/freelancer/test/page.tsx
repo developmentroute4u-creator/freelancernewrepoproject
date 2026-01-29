@@ -126,6 +126,8 @@ function SkillTestPage() {
   const [rejectionMessage, setRejectionMessage] = useState<string>('');
   const [isRetest, setIsRetest] = useState(false);
   const [retestTest, setRetestTest] = useState<any>(null);
+  const [isUnderReview, setIsUnderReview] = useState(false);
+
 
   const testForm = useForm({
     resolver: zodResolver(testSchema),
@@ -233,6 +235,17 @@ function SkillTestPage() {
           return;
         }
 
+        // Check if a specific level was requested via URL parameter (e.g., from "Take Higher Level Test")
+        if (requestedLevel && ['LOW', 'MEDIUM', 'HIGH'].includes(requestedLevel)) {
+          testForm.setValue('testLevel', requestedLevel as 'LOW' | 'MEDIUM' | 'HIGH');
+        }
+
+        // Check if freelancer is under review (test submitted but not yet reviewed)
+        if (data.status === 'UNDER_REVIEW' && !data.badgeLevel) {
+          setIsUnderReview(true);
+          return;
+        }
+
         // Check if freelancer was rejected and set allowed levels
         if (data.rejectedTestLevel) {
           const allowed = getAllowedTestLevels(data.rejectedTestLevel);
@@ -261,7 +274,7 @@ function SkillTestPage() {
     };
 
     loadFreelancer();
-  }, [retestTestId]);
+  }, [retestTestId, requestedLevel]);
 
   const toggleField = (field: string) => {
     const wasSelected = selectedFields.includes(field);
@@ -393,6 +406,68 @@ function SkillTestPage() {
     );
   }
 
+  // Show "Under Review" message if freelancer's test is being reviewed
+  if (isUnderReview) {
+    return (
+      <div className="container mx-auto py-8 max-w-4xl">
+        <Card className="border-2 border-yellow-400 bg-yellow-50">
+          <CardHeader>
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <div className="h-12 w-12 rounded-full bg-yellow-400 flex items-center justify-center">
+                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex-1">
+                <CardTitle className="text-xl text-yellow-900">Test Under Review</CardTitle>
+                <CardDescription className="text-yellow-800 text-base mt-2">
+                  Your skill test submission is currently being reviewed by our admin team.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-white rounded-lg p-4 border border-yellow-200">
+              <h4 className="font-semibold text-yellow-900 mb-2">What happens next?</h4>
+              <ul className="space-y-2 text-sm text-yellow-800">
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-500 mt-0.5">•</span>
+                  <span>Our admin will review your test submission and evaluate your work</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-500 mt-0.5">•</span>
+                  <span>If <strong>approved</strong>, you'll receive a badge and gain full access to projects</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-500 mt-0.5">•</span>
+                  <span>If <strong>rejected</strong>, you can retake the same test or choose a lower difficulty level</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-500 mt-0.5">•</span>
+                  <span><strong>You cannot take a new test</strong> while your current submission is under review</span>
+                </li>
+              </ul>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-yellow-700">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Review typically takes 1-2 business days. You'll be notified once complete.</span>
+            </div>
+            <Button
+              onClick={() => router.push('/freelancer/dashboard')}
+              className="w-full"
+            >
+              Return to Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-8 max-w-4xl">
       {isRetest && retestTest && (
@@ -420,7 +495,7 @@ function SkillTestPage() {
                         <Checkbox
                           id={`field-${field}`}
                           checked={selectedFields.includes(field)}
-                          onCheckedChange={() => toggleField(field)}
+                          onChange={() => toggleField(field)}
                         />
                         <Label
                           htmlFor={`field-${field}`}
@@ -438,7 +513,7 @@ function SkillTestPage() {
                                 <Checkbox
                                   id={`innerField-${field}-${innerField}`}
                                   checked={(fieldInnerFields[field] || []).includes(innerField)}
-                                  onCheckedChange={() => toggleInnerField(field, innerField)}
+                                  onChange={() => toggleInnerField(field, innerField)}
                                 />
                                 <Label
                                   htmlFor={`innerField-${field}-${innerField}`}
@@ -470,8 +545,9 @@ function SkillTestPage() {
                 <Select
                   value={testForm.watch('testLevel')}
                   onValueChange={(value) => testForm.setValue('testLevel', value as any, { shouldValidate: true })}
+                  disabled={!!requestedLevel}
                 >
-                  <SelectTrigger id="testLevel">
+                  <SelectTrigger id="testLevel" className={requestedLevel ? 'opacity-60 cursor-not-allowed' : ''}>
                     <SelectValue placeholder="Select test level" />
                   </SelectTrigger>
                   <SelectContent>
@@ -480,6 +556,11 @@ function SkillTestPage() {
                     {allowedLevels.includes('HIGH') && <SelectItem value="HIGH">High - Advanced (8-16 hours)</SelectItem>}
                   </SelectContent>
                 </Select>
+                {requestedLevel && (
+                  <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-800">
+                    ✓ Test level is pre-selected to {requestedLevel} for your higher badge test
+                  </div>
+                )}
                 {testForm.formState.errors.testLevel && (
                   <p className="text-sm text-red-500 mt-1">{String(testForm.formState.errors.testLevel.message)}</p>
                 )}

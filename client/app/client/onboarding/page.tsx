@@ -172,22 +172,26 @@ export default function ClientOnboarding() {
 
             <div>
               <Label>Type of Freelancer Needed * (Select all that apply)</Label>
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                {fieldNames.map((field) => (
-                  <div key={field} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={field}
-                      checked={selectedFields.includes(field)}
-                      onCheckedChange={() => toggleField(field)}
-                    />
-                    <label
-                      htmlFor={field}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {fieldNames.map((field) => {
+                  const isSelected = selectedFields.includes(field);
+                  return (
+                    <Button
+                      key={field}
+                      type="button"
+                      variant={isSelected ? 'solid' : 'outline'}
+                      size="sm"
+                      className={
+                        isSelected
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 justify-start h-auto py-2 px-3'
+                          : 'border-gray-300 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700 justify-start h-auto py-2 px-3 text-left'
+                      }
+                      onClick={() => toggleField(field)}
                     >
-                      {field}
-                    </label>
-                  </div>
-                ))}
+                      <span className="truncate">{field}</span>
+                    </Button>
+                  );
+                })}
               </div>
               {form.formState.errors.typeOfFreelancerNeeded && (
                 <p className="text-sm text-red-500 mt-2">{String(form.formState.errors.typeOfFreelancerNeeded.message)}</p>

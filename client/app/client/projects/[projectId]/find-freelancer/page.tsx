@@ -111,62 +111,74 @@ export default function FindFreelancerPage() {
                 </Card>
             ) : (
                 <div className="space-y-4">
-                    {freelancers.map((freelancer) => (
-                        <Card key={freelancer._id} className={selectedIds.includes(freelancer._id) ? 'border-blue-500 border-2' : ''}>
-                            <CardContent className="p-6">
-                                <div className="flex items-start gap-4">
-                                    <Checkbox
-                                        checked={selectedIds.includes(freelancer._id)}
-                                        onCheckedChange={() => toggleSelection(freelancer._id)}
-                                    />
-                                    <div className="flex-1">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div>
-                                                <h3 className="text-lg font-semibold">{freelancer.fullName}</h3>
-                                                <p className="text-sm text-muted-foreground">{freelancer.userId?.email}</p>
-                                            </div>
-                                            <Badge variant={
-                                                freelancer.badgeLevel === 'HIGH' ? 'default' :
-                                                    freelancer.badgeLevel === 'MEDIUM' ? 'secondary' : 'outline'
-                                            }>
-                                                {freelancer.badgeLevel} Level
-                                            </Badge>
+                    {freelancers.map((freelancer) => {
+                        const isSelected = selectedIds.includes(freelancer._id);
+                        return (
+                            <Card
+                                key={freelancer._id}
+                                className={`transition-all duration-200 cursor-pointer hover:shadow-md ${isSelected
+                                    ? 'border-blue-600 border-2 bg-blue-50/50 shadow-sm'
+                                    : 'hover:border-blue-300 hover:bg-neutral-50'
+                                    }`}
+                                onClick={() => toggleSelection(freelancer._id)}
+                            >
+                                <CardContent className="p-6">
+                                    <div className="flex items-start gap-4">
+                                        <div onClick={(e) => e.stopPropagation()}>
+                                            <Checkbox
+                                                checked={isSelected}
+                                                onChange={() => toggleSelection(freelancer._id)}
+                                            />
                                         </div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <h3 className="text-lg font-semibold">{freelancer.fullName}</h3>
+                                                    <p className="text-sm text-muted-foreground">{freelancer.userId?.email}</p>
+                                                </div>
+                                                <Badge variant={
+                                                    freelancer.badgeLevel === 'HIGH' ? 'primary' :
+                                                        freelancer.badgeLevel === 'MEDIUM' ? 'info' : 'outline'
+                                                }>
+                                                    {freelancer.badgeLevel} Level
+                                                </Badge>
+                                            </div>
 
-                                        <div className="grid grid-cols-2 gap-4 mt-4">
-                                            <div>
-                                                <p className="text-sm font-medium">Field</p>
-                                                <p className="text-sm text-muted-foreground">{freelancer.field}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium">Experience</p>
-                                                <p className="text-sm text-muted-foreground">{freelancer.yearsOfExperience} years</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium">Location</p>
-                                                <p className="text-sm text-muted-foreground">{freelancer.location}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium">Hourly Rate</p>
-                                                <p className="text-sm text-muted-foreground">₹{freelancer.hourlyRate || 'N/A'}/hr</p>
-                                            </div>
-                                        </div>
-
-                                        {freelancer.skills && freelancer.skills.length > 0 && (
-                                            <div className="mt-4">
-                                                <p className="text-sm font-medium mb-2">Skills</p>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {freelancer.skills.map((skill: string, idx: number) => (
-                                                        <Badge key={idx} variant="outline">{skill}</Badge>
-                                                    ))}
+                                            <div className="grid grid-cols-2 gap-4 mt-4">
+                                                <div>
+                                                    <p className="text-sm font-medium">Field</p>
+                                                    <p className="text-sm text-muted-foreground">{freelancer.education?.field || 'General'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium">Experience</p>
+                                                    <p className="text-sm text-muted-foreground">{freelancer.yearsOfExperience} years</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium">Location</p>
+                                                    <p className="text-sm text-muted-foreground">{freelancer.location}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium">Hourly Rate</p>
+                                                    <p className="text-sm text-muted-foreground">₹{freelancer.hourlyRate || 'N/A'}/hr</p>
                                                 </div>
                                             </div>
-                                        )}
+
+                                            {freelancer.education?.innerFields && freelancer.education.innerFields.length > 0 && (
+                                                <div className="mt-4">
+                                                    <p className="text-sm font-medium mb-2">Specializations</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {freelancer.education.innerFields.map((skill: string, idx: number) => (
+                                                            <Badge key={idx} variant="outline">{skill}</Badge>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
                 </div>
             )}
 
