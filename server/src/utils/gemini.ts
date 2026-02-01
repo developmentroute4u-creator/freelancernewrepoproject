@@ -38,7 +38,10 @@ export const generateSkillTest = async (
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: { responseMimeType: 'application/json' }
+    });
 
     // Determine complexity based on level
     const complexityMap = {
@@ -165,14 +168,27 @@ Generate the test now. Return ONLY the JSON object, no markdown, no code blocks,
     cleanedText = cleanedText.trim();
 
     // Parse JSON from response
-    const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      return {
-        title: parsed.title || `${params.field} - ${params.testLevel} Level Assignment`,
-        description: parsed.description || `A practical assignment to assess your ${params.testLevel.toLowerCase()} level skills in ${params.field}.`,
-        instructions: parsed.instructions || `Complete the task requirements and submit your deliverables.`,
-      };
+    try {
+      // First try to parse the entire text
+      return JSON.parse(cleanedText);
+    } catch (parseError) {
+      console.warn('Initial JSON parse failed, trying regex match...', parseError);
+      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          return {
+            title: parsed.title || `${params.field} - ${params.testLevel} Level Assignment`,
+            description: parsed.description || `A practical assignment to assess your ${params.testLevel.toLowerCase()} level skills in ${params.field}.`,
+            instructions: parsed.instructions || `Complete the task requirements and submit your deliverables.`,
+          };
+        } catch (innerError) {
+          console.error('Failed to parse JSON match:', jsonMatch[0]);
+          throw innerError;
+        }
+      }
+      console.error('No JSON block found in response:', cleanedText);
+      throw new Error('Failed to parse Gemini response: No valid JSON found');
     }
 
     throw new Error('Failed to parse Gemini response');
@@ -270,7 +286,7 @@ export const generateScope = async (
       'Ongoing support beyond project completion'
     ];
     const acceptanceCriteria = ['All deliverables completed', 'Client approval obtained'];
-    
+
     return {
       projectTitle: `${params.field.toUpperCase()} PROJECT: ${params.intentAnswers.goalOfWork}`,
       projectOverview: `${params.field} project: ${params.intentAnswers.goalOfWork}. This project focuses on ${params.innerFields.join(', ')} and will be delivered by ${new Date(params.intentAnswers.deadline).toLocaleDateString()}.`,
@@ -326,7 +342,10 @@ export const generateScope = async (
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: { responseMimeType: 'application/json' }
+    });
 
     const prompt = `ROLE
 
@@ -580,10 +599,9 @@ IMPORTANT: Generate ONLY based on what the client implied in their intent answer
     cleanedText = cleanedText.replace(/\s*```$/i, '');
     cleanedText = cleanedText.trim();
 
-    const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      
+    try {
+      const parsed = JSON.parse(cleanedText);
+
       // Extract detailed scope breakdown sections
       const detailedScopeBreakdown: { [key: string]: string[] } = {};
       if (parsed.detailedScopeBreakdown) {
@@ -600,41 +618,40 @@ IMPORTANT: Generate ONLY based on what the client implied in their intent answer
           detailedScopeBreakdown.advancedElements = parsed.detailedScopeBreakdown.advancedElements;
         }
       }
-      
+
       // Extract functional scope
       const functionalIncluded = parsed.functionalScope?.included || [];
       const functionalExcluded = parsed.functionalScope?.excluded || [];
-      
+
       // Extract assumptions
       const technicalAssumptions = parsed.assumptions?.technical || [];
       const nonTechnicalAssumptions = parsed.assumptions?.nonTechnical || [];
-      const allAssumptions = [...technicalAssumptions, ...nonTechnicalAssumptions];
-      
+
       // Extract project phases and create timeline strings
       const projectPhases = parsed.projectPhases || [];
       const timelineStrings = projectPhases.map((phase: any) => {
         const activities = Array.isArray(phase.activities) ? phase.activities.join(', ') : '';
         return `${phase.phase}: ${phase.duration} - ${activities}`;
       });
-      
+
       // Combine in-scope items from multiple sources for legacy format
       const inScopeItems = [
         ...(parsed.inScopeStructure || []),
         ...functionalIncluded,
         ...Object.values(detailedScopeBreakdown).flat()
       ];
-      
+
       // Combine exclusions
       const outOfScopeItems = [
         ...(parsed.outOfScopeItems || []),
         ...functionalExcluded
       ];
-      
+
       // Create acceptance criteria from deliverables
-      const acceptanceCriteria = parsed.deliverables?.map((d: string) => 
-        `Deliverable "${d}" completed and approved` 
+      const acceptanceCriteria = parsed.deliverables?.map((d: string) =>
+        `Deliverable "${d}" completed and approved`
       ) || [];
-      
+
       return {
         // New structure
         projectTitle: parsed.projectTitle || `${params.field.toUpperCase()} PROJECT: ${params.intentAnswers.goalOfWork}`,
@@ -663,17 +680,20 @@ IMPORTANT: Generate ONLY based on what the client implied in their intent answer
         completionCriteria: acceptanceCriteria.length > 0 ? acceptanceCriteria : ['All deliverables completed and approved'],
         revisionLimits: parsed.revisionLimits || (params.intentAnswers.priority === 'SPEED' ? 2 : params.intentAnswers.priority === 'QUALITY' ? 3 : 4),
       };
+    } catch (parseError: any) {
+      console.error('Failed to parse Gemini response as JSON for scope:', parseError);
+      throw parseError;
     }
 
     throw new Error('Failed to parse Gemini response');
   } catch (error: any) {
     console.error('Gemini API error:', error);
-    
+
     // Check if it's an authentication error
     if (error.status === 403 || error.message?.includes('API Key') || error.message?.includes('unregistered callers')) {
       console.error('❌ Gemini API authentication failed. Please check your GEMINI_API_KEY in .env file.');
     }
-    
+
     // Fallback scope
     const inScopeItems = [
       'Complete project implementation per stated goals',
@@ -690,7 +710,7 @@ IMPORTANT: Generate ONLY based on what the client implied in their intent answer
       'Ongoing support beyond project completion'
     ];
     const acceptanceCriteria = ['All deliverables completed', 'Client approval obtained'];
-    
+
     return {
       projectTitle: `${params.field.toUpperCase()} PROJECT: ${params.intentAnswers.goalOfWork}`,
       projectOverview: `${params.field} project: ${params.intentAnswers.goalOfWork}. This project focuses on ${params.innerFields.join(', ')} and will be delivered by ${new Date(params.intentAnswers.deadline).toLocaleDateString()}.`,
