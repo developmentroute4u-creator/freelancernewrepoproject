@@ -90,6 +90,8 @@ function CreateProjectContent() {
   const [selectedScopeMode, setSelectedScopeMode] = useState<'PLATFORM_SCOPE' | 'OWN_SCOPE' | null>(null);
   const [selectedAccountabilityMode, setSelectedAccountabilityMode] = useState<'ACCOUNTABILITY' | 'BASIC' | null>(null);
   const [projectName, setProjectName] = useState<string>('');
+  const [submittedIntent, setSubmittedIntent] = useState<IntentForm | null>(null);
+  const [selectedPriceTier, setSelectedPriceTier] = useState<'LOW' | 'MEDIUM' | 'HIGH' | null>(null);
 
   useEffect(() => {
     checkClientProfile();
@@ -127,6 +129,7 @@ function CreateProjectContent() {
     try {
       // Store project name for later use
       setProjectName(data.projectName);
+      setSubmittedIntent(data);
 
       const intentAnswers = {
         goalOfWork: data.goalOfWork,
@@ -516,39 +519,61 @@ function CreateProjectContent() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-3 gap-4">
                       {/* LOW Tier */}
-                      <div className={`p-4 rounded-lg border-2 ${generatedScope.pricing.breakdown?.recommended === 'LOW'
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200'
-                        }`}>
-                        <p className="text-xs text-muted-foreground mb-1">LOW</p>
-                        <p className="text-2xl font-bold text-gray-700">
+                      <div
+                        onClick={() => setSelectedPriceTier('LOW')}
+                        className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${selectedPriceTier === 'LOW'
+                            ? 'border-green-500 bg-green-50 ring-2 ring-green-300'
+                            : 'border-gray-200 hover:border-green-300'
+                          }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs text-muted-foreground">LOW</p>
+                          {generatedScope.pricing.breakdown?.recommended === 'LOW' && (
+                            <Badge className="bg-blue-500 text-xs">Recommended</Badge>
+                          )}
+                        </div>
+                        <p className={`text-2xl font-bold ${selectedPriceTier === 'LOW' ? 'text-green-600' : 'text-gray-700'
+                          }`}>
                           ₹{generatedScope.pricing.tiers.low.toLocaleString()}
                         </p>
                       </div>
 
                       {/* MEDIUM Tier (Recommended) */}
-                      <div className={`p-4 rounded-lg border-2 ${generatedScope.pricing.breakdown?.recommended === 'MEDIUM'
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200'
-                        }`}>
+                      <div
+                        onClick={() => setSelectedPriceTier('MEDIUM')}
+                        className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${selectedPriceTier === 'MEDIUM'
+                            ? 'border-green-500 bg-green-50 ring-2 ring-green-300'
+                            : 'border-gray-200 hover:border-green-300'
+                          }`}
+                      >
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-xs text-muted-foreground">MEDIUM</p>
                           {generatedScope.pricing.breakdown?.recommended === 'MEDIUM' && (
-                            <Badge className="bg-green-500 text-xs">Recommended</Badge>
+                            <Badge className="bg-blue-500 text-xs">Recommended</Badge>
                           )}
                         </div>
-                        <p className="text-2xl font-bold text-green-600">
+                        <p className={`text-2xl font-bold ${selectedPriceTier === 'MEDIUM' ? 'text-green-600' : 'text-gray-700'
+                          }`}>
                           ₹{generatedScope.pricing.tiers.medium.toLocaleString()}
                         </p>
                       </div>
 
                       {/* HIGH Tier */}
-                      <div className={`p-4 rounded-lg border-2 ${generatedScope.pricing.breakdown?.recommended === 'HIGH'
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200'
-                        }`}>
-                        <p className="text-xs text-muted-foreground mb-1">HIGH</p>
-                        <p className="text-2xl font-bold text-gray-700">
+                      <div
+                        onClick={() => setSelectedPriceTier('HIGH')}
+                        className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${selectedPriceTier === 'HIGH'
+                            ? 'border-green-500 bg-green-50 ring-2 ring-green-300'
+                            : 'border-gray-200 hover:border-green-300'
+                          }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs text-muted-foreground">HIGH</p>
+                          {generatedScope.pricing.breakdown?.recommended === 'HIGH' && (
+                            <Badge className="bg-blue-500 text-xs">Recommended</Badge>
+                          )}
+                        </div>
+                        <p className={`text-2xl font-bold ${selectedPriceTier === 'HIGH' ? 'text-green-600' : 'text-gray-700'
+                          }`}>
                           ₹{generatedScope.pricing.tiers.high.toLocaleString()}
                         </p>
                       </div>
@@ -663,9 +688,15 @@ function CreateProjectContent() {
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle>Complete Statement of Work (SOW)</CardTitle>
+                  <CardTitle>
+                    {selectedScopeMode === 'PLATFORM_SCOPE'
+                      ? 'Complete Statement of Work (SOW)'
+                      : 'Project Intent Details'}
+                  </CardTitle>
                   <CardDescription>
-                    Full detailed scope for your project - {selectedScopeMode === 'PLATFORM_SCOPE' ? 'Platform Scope' : 'Own Scope'}
+                    {selectedScopeMode === 'PLATFORM_SCOPE'
+                      ? 'Full detailed scope for your project - Platform Scope'
+                      : 'Review your submitted answers for Own Scope'}
                   </CardDescription>
                 </div>
                 <Button
@@ -678,87 +709,181 @@ function CreateProjectContent() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Full Project Overview */}
-              {generatedScope.projectOverview && (
-                <div>
-                  <h3 className="font-semibold text-lg mb-2">📋 Project Overview</h3>
-                  <p className="text-sm whitespace-pre-wrap">{generatedScope.projectOverview}</p>
-                </div>
-              )}
+              {selectedScopeMode === 'PLATFORM_SCOPE' ? (
+                <>
+                  {/* Full Project Overview */}
+                  {generatedScope.projectOverview && (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">📋 Project Overview</h3>
+                      <p className="text-sm whitespace-pre-wrap">{generatedScope.projectOverview}</p>
+                    </div>
+                  )}
 
-              {/* Full In-Scope Items */}
-              {(generatedScope.inScopeItems && generatedScope.inScopeItems.length > 0 ? generatedScope.inScopeItems : generatedScope.inclusions) && (
-                <div>
-                  <h3 className="font-semibold text-lg mb-2">✅ In-Scope Items</h3>
-                  <ul className="list-disc list-inside space-y-1">
-                    {(generatedScope.inScopeItems || generatedScope.inclusions).map((item, idx) => (
-                      <li key={idx} className="text-sm">{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                  {/* Full In-Scope Items */}
+                  {(generatedScope.inScopeItems && generatedScope.inScopeItems.length > 0 ? generatedScope.inScopeItems : generatedScope.inclusions) && (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">✅ In-Scope Items</h3>
+                      <ul className="list-disc list-inside space-y-1">
+                        {(generatedScope.inScopeItems || generatedScope.inclusions).map((item, idx) => (
+                          <li key={idx} className="text-sm">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-              {/* Full Out-of-Scope Items */}
-              {(generatedScope.outOfScopeItems && generatedScope.outOfScopeItems.length > 0 ? generatedScope.outOfScopeItems : generatedScope.exclusions) && (
-                <div>
-                  <h3 className="font-semibold text-lg mb-2">❌ Out-of-Scope Items</h3>
-                  <ul className="list-disc list-inside space-y-1">
-                    {(generatedScope.outOfScopeItems || generatedScope.exclusions).map((item, idx) => (
-                      <li key={idx} className="text-sm">{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                  {/* Full Out-of-Scope Items */}
+                  {(generatedScope.outOfScopeItems && generatedScope.outOfScopeItems.length > 0 ? generatedScope.outOfScopeItems : generatedScope.exclusions) && (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">❌ Out-of-Scope Items</h3>
+                      <ul className="list-disc list-inside space-y-1">
+                        {(generatedScope.outOfScopeItems || generatedScope.exclusions).map((item, idx) => (
+                          <li key={idx} className="text-sm">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-              {/* Full Assumptions */}
-              {generatedScope.assumptions && generatedScope.assumptions.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-lg mb-2">📝 Assumptions</h3>
-                  <ul className="list-disc list-inside space-y-1">
-                    {generatedScope.assumptions.map((item, idx) => (
-                      <li key={idx} className="text-sm">{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                  {/* Full Assumptions */}
+                  {generatedScope.assumptions && generatedScope.assumptions.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">📝 Assumptions</h3>
+                      <ul className="list-disc list-inside space-y-1">
+                        {generatedScope.assumptions.map((item, idx) => (
+                          <li key={idx} className="text-sm">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-              {/* Full Deliverables */}
-              <div>
-                <h3 className="font-semibold text-lg mb-2">📦 Deliverables</h3>
-                <ul className="list-disc list-inside space-y-1">
-                  {generatedScope.deliverables.map((item, idx) => (
-                    <li key={idx} className="text-sm">{item}</li>
-                  ))}
-                </ul>
-              </div>
+                  {/* Full Deliverables */}
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">📦 Deliverables</h3>
+                    <ul className="list-disc list-inside space-y-1">
+                      {generatedScope.deliverables.map((item, idx) => (
+                        <li key={idx} className="text-sm">{item}</li>
+                      ))}
+                    </ul>
+                  </div>
 
-              {/* Full Timeline */}
-              {generatedScope.timeline && generatedScope.timeline.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-lg mb-2">📅 Timeline</h3>
-                  <ul className="list-disc list-inside space-y-1">
-                    {generatedScope.timeline.map((item, idx) => (
-                      <li key={idx} className="text-sm">{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                  {/* Full Timeline */}
+                  {generatedScope.timeline && generatedScope.timeline.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">📅 Timeline</h3>
+                      <ul className="list-disc list-inside space-y-1">
+                        {generatedScope.timeline.map((item, idx) => (
+                          <li key={idx} className="text-sm">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-              {/* Revision Limits */}
-              <div>
-                <h3 className="font-semibold text-lg mb-2">🔄 Revision Limits</h3>
-                <p className="text-sm">Up to <strong>{generatedScope.revisionLimits}</strong> rounds of revisions included</p>
-              </div>
+                  {/* Revision Limits */}
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">🔄 Revision Limits</h3>
+                    <p className="text-sm">Up to <strong>{generatedScope.revisionLimits}</strong> rounds of revisions included</p>
+                  </div>
 
-              {/* Full Acceptance Criteria */}
-              {(generatedScope.acceptanceCriteria && generatedScope.acceptanceCriteria.length > 0 ? generatedScope.acceptanceCriteria : generatedScope.completionCriteria) && (
-                <div>
-                  <h3 className="font-semibold text-lg mb-2">🎯 Acceptance Criteria</h3>
-                  <ul className="list-disc list-inside space-y-1">
-                    {(generatedScope.acceptanceCriteria || generatedScope.completionCriteria).map((item, idx) => (
-                      <li key={idx} className="text-sm">{item}</li>
-                    ))}
-                  </ul>
+                  {/* Full Acceptance Criteria */}
+                  {(generatedScope.acceptanceCriteria && generatedScope.acceptanceCriteria.length > 0 ? generatedScope.acceptanceCriteria : generatedScope.completionCriteria) && (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">🎯 Acceptance Criteria</h3>
+                      <ul className="list-disc list-inside space-y-1">
+                        {(generatedScope.acceptanceCriteria || generatedScope.completionCriteria).map((item, idx) => (
+                          <li key={idx} className="text-sm">{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="space-y-6">
+                  {submittedIntent ? (
+                    <>
+                      <div>
+                        <h3 className="font-semibold text-lg mb-2">📝 Project Details</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted/30 p-4 rounded-lg">
+                          <div>
+                            <span className="text-xs font-semibold text-muted-foreground uppercase">Project Name</span>
+                            <p className="text-sm font-medium">{submittedIntent.projectName}</p>
+                          </div>
+                          <div>
+                            <span className="text-xs font-semibold text-muted-foreground uppercase">Field</span>
+                            <p className="text-sm font-medium">{submittedIntent.field}</p>
+                          </div>
+                          <div className="md:col-span-2">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase">Specializations</span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {submittedIntent.innerFields.map((field) => (
+                                <Badge key={field} variant="secondary">{field}</Badge>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-xs font-semibold text-muted-foreground uppercase">Deadline</span>
+                            <p className="text-sm font-medium">{submittedIntent.deadline}</p>
+                          </div>
+                          <div>
+                            <span className="text-xs font-semibold text-muted-foreground uppercase">Priority</span>
+                            <p className="text-sm font-medium">{submittedIntent.priority}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="font-medium text-sm mb-1">Primary Goal</h4>
+                          <div className="bg-muted/30 p-3 rounded-md text-sm whitespace-pre-wrap">
+                            {submittedIntent.goalOfWork}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="font-medium text-sm mb-1">Usage Context</h4>
+                          <div className="bg-muted/30 p-3 rounded-md text-sm whitespace-pre-wrap">
+                            {submittedIntent.usageContext}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="font-medium text-sm mb-1">Target Audience</h4>
+                          <div className="bg-muted/30 p-3 rounded-md text-sm whitespace-pre-wrap">
+                            {submittedIntent.targetAudience}
+                          </div>
+                        </div>
+
+                        {submittedIntent.specificRequirements && (
+                          <div>
+                            <h4 className="font-medium text-sm mb-1">Specific Requirements</h4>
+                            <div className="bg-muted/30 p-3 rounded-md text-sm whitespace-pre-wrap">
+                              {submittedIntent.specificRequirements}
+                            </div>
+                          </div>
+                        )}
+
+                        {submittedIntent.existingAssets && (
+                          <div>
+                            <h4 className="font-medium text-sm mb-1">Existing Assets</h4>
+                            <div className="bg-muted/30 p-3 rounded-md text-sm whitespace-pre-wrap">
+                              {submittedIntent.existingAssets}
+                            </div>
+                          </div>
+                        )}
+
+                        {submittedIntent.references && (
+                          <div>
+                            <h4 className="font-medium text-sm mb-1">References</h4>
+                            <div className="bg-muted/30 p-3 rounded-md text-sm whitespace-pre-wrap">
+                              {submittedIntent.references}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Could not retrieve project details. Please go back and try generating the scope again.
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>

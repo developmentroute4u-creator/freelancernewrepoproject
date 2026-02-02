@@ -34,7 +34,7 @@ export default function ProjectDetailPage() {
             console.log('✅ Frontend: Project loaded:', data);
             setProject(data);
             setError(null);
-            
+
             // If no freelancer is selected, load available freelancers
             const hasFreelancer = data.freelancerId && (typeof data.freelancerId === 'object' ? data.freelancerId._id : data.freelancerId);
             if (!hasFreelancer) {
@@ -90,6 +90,23 @@ export default function ProjectDetailPage() {
             alert(error.response?.data?.error || 'Failed to send invitations');
         } finally {
             setSending(false);
+        }
+    };
+
+    const completeProject = async () => {
+        if (!confirm('Are you sure you want to mark this project as completed? This will indicate that the work is done and payment can be processed.')) {
+            return;
+        }
+
+        try {
+            await api.patch(`/projects/${projectId}/state`, {
+                state: 'COMPLETED'
+            });
+            alert('Project marked as completed!');
+            loadProject();
+        } catch (error: any) {
+            console.error('Error completing project:', error);
+            alert(error.response?.data?.error || 'Failed to complete project');
         }
     };
 
@@ -295,7 +312,12 @@ export default function ProjectDetailPage() {
                                 <CardTitle className="text-2xl">{project.name || 'Project Details'}</CardTitle>
                                 <CardDescription>View and manage your project</CardDescription>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex items-center gap-2">
+                                {project.state === 'ACTIVE' && (
+                                    <Button size="sm" onClick={completeProject} className="bg-green-600 hover:bg-green-700 text-white mr-2">
+                                        Mark Completed & Pay
+                                    </Button>
+                                )}
                                 <Badge variant={project.state === 'ACTIVE' ? 'primary' : 'neutral'}>
                                     {project.state}
                                 </Badge>
@@ -321,7 +343,7 @@ export default function ProjectDetailPage() {
                                 <div className="col-span-2">
                                     <p className="text-sm font-medium">Assigned Freelancer</p>
                                     <p className="text-sm text-muted-foreground">
-                                        {typeof project.freelancerId === 'object' 
+                                        {typeof project.freelancerId === 'object'
                                             ? `${project.freelancerId.fullName} (${project.freelancerId.userId?.email || 'N/A'})`
                                             : 'Assigned'}
                                     </p>

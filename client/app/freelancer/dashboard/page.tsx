@@ -434,8 +434,8 @@ export default function FreelancerDashboard() {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <StatCard
                 title="Active Projects"
-                value={projects.length}
-                description={`${projects.filter((p: any) => p.status === 'IN_PROGRESS').length} in progress`}
+                value={projects.filter((p: any) => p.state === 'ACTIVE' || p.state === 'COMPLETED').length}
+                description={`${projects.filter((p: any) => p.state === 'ACTIVE').length} in progress`}
                 icon={Briefcase}
               />
               <StatCard

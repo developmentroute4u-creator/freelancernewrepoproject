@@ -67,8 +67,8 @@ export default function ClientDashboard() {
     { label: 'Settings', href: '/client/settings', icon: Settings },
   ]
 
-  const activeProjects = projects.filter(p => p.status === 'IN_PROGRESS')
-  const completedProjects = projects.filter(p => p.status === 'COMPLETED')
+  const activeProjects = projects.filter(p => p.state === 'ACTIVE')
+  const completedProjects = projects.filter(p => p.state === 'COMPLETED')
 
   if (loading) {
     return (
@@ -213,13 +213,13 @@ export default function ClientDashboard() {
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <CardTitle>{project.title || 'Untitled Project'}</CardTitle>
+                            <CardTitle>{project.name || 'Untitled Project'}</CardTitle>
                             <CardDescription className="mt-1">
                               {project.scopeId?.field || 'General'} • Created {new Date(project.createdAt).toLocaleDateString()}
                             </CardDescription>
                           </div>
                           <Badge variant="info">
-                            {project.status}
+                            {project.state}
                           </Badge>
                         </div>
                       </CardHeader>
@@ -227,7 +227,7 @@ export default function ClientDashboard() {
                         <div className="flex items-center justify-between">
                           <div className="space-y-1">
                             <p className="text-sm text-neutral-600">
-                              Freelancer: {project.freelancerId?.name || 'Not assigned'}
+                              Freelancer: {project.freelancerId?.fullName || 'Not assigned'}
                             </p>
                             {project.deadline && (
                               <p className="text-sm text-neutral-600 flex items-center gap-1">
@@ -265,7 +265,7 @@ export default function ClientDashboard() {
                           </div>
                           <div>
                             <p className="font-medium text-neutral-900">
-                              {project.title || 'Untitled Project'}
+                              {project.name || 'Untitled Project'}
                             </p>
                             <p className="text-sm text-neutral-600">
                               Completed {new Date(project.updatedAt).toLocaleDateString()}

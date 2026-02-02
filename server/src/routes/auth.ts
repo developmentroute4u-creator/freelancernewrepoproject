@@ -7,6 +7,7 @@ import { Test } from '../models/Test.js';
 import { TestSubmission } from '../models/TestSubmission.js';
 import { generateSkillTest } from '../utils/gemini.js';
 import { logAudit, AuditAction } from '../utils/auditLogger.js';
+import { authenticate, AuthRequest } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -304,6 +305,99 @@ router.post('/login', async (req, res) => {
         role: user.role,
       },
     });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get current user (authenticated)
+router.get('/me', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const user = await User.findById(req.userId).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update profile (authenticated)
+router.patch('/profile', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { name } = req.body;
+
+    if (!name || name.trim().length < 2) {
+      return res.status(400).json({ error: 'Name must be at least 2 characters' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { name: name.trim() },
+      { new: true }
+    ).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    await logAudit({
+      action: AuditAction.USER_UPDATED,
+      userId: user._id.toString(),
+      entityType: 'User',
+      entityId: user._id.toString(),
+      metadata: { name },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+    });
+
+    res.json(user);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Change password (authenticated)
+router.patch('/change-password', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    await logAudit({
+      action: AuditAction.USER_UPDATED,
+      userId: user._id.toString(),
+      entityType: 'User',
+      entityId: user._id.toString(),
+      metadata: { action: 'password_changed' },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+    });
+
+    res.json({ message: 'Password changed successfully' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

@@ -55,7 +55,13 @@ export default function FindFreelancerPage() {
             });
 
             alert(`Successfully sent ${selectedIds.length} invitation(s)!`);
-            router.push(`/client/projects/${projectId}`);
+
+            // Clear selection and reload the freelancer list to show remaining available freelancers
+            setSelectedIds([]);
+            await loadFreelancers();
+
+            // Optionally redirect to project page after a short delay
+            // setTimeout(() => router.push(`/client/projects/${projectId}`), 1500);
         } catch (error: any) {
             console.error('Error sending invitations:', error);
             alert(error.response?.data?.error || 'Failed to send invitations');
@@ -85,6 +91,10 @@ export default function FindFreelancerPage() {
                     <CardTitle>Find Freelancers</CardTitle>
                     <CardDescription>
                         Select freelancers to invite to your project. They will be notified and can accept or reject the invitation.
+                        <br />
+                        <span className="text-xs italic mt-1 inline-block">
+                            Note: Freelancers who have already been invited to this project are not shown in this list.
+                        </span>
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -102,10 +112,13 @@ export default function FindFreelancerPage() {
                 <Card>
                     <CardContent className="py-12 text-center">
                         <p className="text-muted-foreground">
-                            No freelancers found matching your project requirements.
+                            No available freelancers found matching your project requirements.
                         </p>
                         <p className="text-sm text-muted-foreground mt-2">
-                            Try broadening your project scope or check back later.
+                            This list excludes freelancers who have already been invited to this project.
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Try broadening your project scope or check back later for new freelancers.
                         </p>
                     </CardContent>
                 </Card>

@@ -38,6 +38,39 @@ export default function FreelancerProjectDetailPage() {
         }
     };
 
+    const confirmPayment = async () => {
+        if (!confirm('Are you sure you want to confirm payment reception? This will close the project.')) {
+            return;
+        }
+
+        try {
+            await api.patch(`/projects/${projectId}/state`, {
+                state: 'CLOSED'
+            });
+            alert('Project closed successfully!');
+            loadProject();
+        } catch (error: any) {
+            console.error('Error closing project:', error);
+            alert(error.response?.data?.error || 'Failed to close project');
+        }
+    };
+
+    const reportIssue = async () => {
+        const reason = prompt('Please describe the issue with the payment:');
+        if (!reason) return;
+
+        try {
+            await api.patch(`/projects/${projectId}/state`, {
+                state: 'DISPUTED'
+            });
+            alert('Project marked as disputed. Support will contact you.');
+            loadProject();
+        } catch (error: any) {
+            console.error('Error reporting issue:', error);
+            alert(error.response?.data?.error || 'Failed to report issue');
+        }
+    };
+
     if (loading) {
         return (
             <div className="container mx-auto py-8">
@@ -49,6 +82,8 @@ export default function FreelancerProjectDetailPage() {
             </div>
         );
     }
+
+    // ... error and no project checks ...
 
     if (error) {
         return (
@@ -91,6 +126,19 @@ export default function FreelancerProjectDetailPage() {
             </div>
 
             <div className="space-y-6">
+                {project.state === 'COMPLETED' && (
+                    <Card className="bg-green-50 border-green-200">
+                        <CardContent className="p-6">
+                            <h3 className="text-lg font-semibold text-green-800 mb-2">Project Completed</h3>
+                            <p className="text-green-700 mb-4">The client has marked this project as completed. Please confirm if you have received the payment.</p>
+                            <div className="flex gap-4">
+                                <Button onClick={confirmPayment} className="bg-green-600 hover:bg-green-700">Confirm Payment Received</Button>
+                                <Button onClick={reportIssue} variant="destructive">Report Issue</Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 <Card>
                     <CardHeader>
                         <div className="flex justify-between items-start">
@@ -124,7 +172,7 @@ export default function FreelancerProjectDetailPage() {
                                 <div className="col-span-2">
                                     <p className="text-sm font-medium">Client</p>
                                     <p className="text-sm text-muted-foreground">
-                                        {typeof project.clientId === 'object' 
+                                        {typeof project.clientId === 'object'
                                             ? project.clientId.companyName || 'N/A'
                                             : 'N/A'}
                                     </p>

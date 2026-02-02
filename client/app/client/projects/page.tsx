@@ -11,7 +11,7 @@ interface Project {
     _id: string;
     state: string;
     accountabilityMode: string;
-    freelancerId: {
+    freelancerId?: {
         fullName: string;
         badgeLevel: string;
     };
@@ -87,7 +87,9 @@ export default function ClientProjects() {
                                     <div>
                                         <CardTitle>{project.scopeId.field} Project</CardTitle>
                                         <CardDescription className="mt-1">
-                                            with {project.freelancerId.fullName}
+                                            {project.freelancerId
+                                                ? `with ${project.freelancerId.fullName}`
+                                                : 'Waiting for freelancer acceptance'}
                                         </CardDescription>
                                     </div>
                                     <Badge className={`${getStateColor(project.state)} text-white`}>
@@ -97,9 +99,11 @@ export default function ClientProjects() {
                             </CardHeader>
                             <CardContent>
                                 <div className="flex gap-2">
-                                    <Badge variant="outline">
-                                        {project.freelancerId.badgeLevel} Badge
-                                    </Badge>
+                                    {project.freelancerId && (
+                                        <Badge variant="outline">
+                                            {project.freelancerId.badgeLevel} Badge
+                                        </Badge>
+                                    )}
                                     <Badge variant="outline">
                                         {project.scopeId.scopeMode === 'PLATFORM_SCOPE' ? 'Platform Scope' : 'Own Scope'}
                                     </Badge>

@@ -6,6 +6,7 @@ import { Test } from '../models/Test.js';
 import { TestSubmission } from '../models/TestSubmission.js';
 import { Project } from '../models/Project.js';
 import { Scope } from '../models/Scope.js';
+import { ProjectInvitation } from '../models/ProjectInvitation.js';
 import { generateSkillTest } from '../utils/gemini.js';
 import { logAudit, AuditAction } from '../utils/auditLogger.js';
 
@@ -51,6 +52,19 @@ router.get('/by-project/:projectId', authorize(UserRole.CLIENT), async (req: Aut
 
         console.log(`✅ Found ${freelancers.length} matching freelancers`);
 
+        // Get existing invitations for this project to filter out already-invited freelancers
+        const existingInvitations = await ProjectInvitation.find({ projectId }).select('freelancerId');
+        const invitedFreelancerIds = existingInvitations.map(inv => inv.freelancerId.toString());
+
+        console.log(`📧 ${invitedFreelancerIds.length} freelancers already invited to this project`);
+
+        // Filter out already-invited freelancers
+        const availableFreelancers = freelancers.filter(
+            freelancer => !invitedFreelancerIds.includes(freelancer._id.toString())
+        );
+
+        console.log(`✅ ${availableFreelancers.length} freelancers available (after filtering invited ones)`);
+
         // Helper function to count matching inner fields
         const countMatchingInnerFields = (projectInnerFields: string[], freelancerInnerFields: string[]): number => {
             if (!projectInnerFields || !freelancerInnerFields) return 0;
@@ -59,7 +73,7 @@ router.get('/by-project/:projectId', authorize(UserRole.CLIENT), async (req: Aut
 
         // Enhanced sorting: Multi-factor ranking
         const badgePriority = { HIGH: 3, MEDIUM: 2, LOW: 1 };
-        freelancers.sort((a, b) => {
+        availableFreelancers.sort((a, b) => {
             // Primary sort: Badge level (HIGH > MEDIUM > LOW)
             const aBadgePriority = badgePriority[a.badgeLevel as keyof typeof badgePriority] || 0;
             const bBadgePriority = badgePriority[b.badgeLevel as keyof typeof badgePriority] || 0;
@@ -90,7 +104,7 @@ router.get('/by-project/:projectId', authorize(UserRole.CLIENT), async (req: Aut
             return bExp - aExp;
         });
 
-        res.json(freelancers);
+        res.json(availableFreelancers);
     } catch (error: any) {
         console.error('❌ Error finding freelancers:', error);
         res.status(500).json({ error: error.message });
