@@ -522,8 +522,8 @@ function CreateProjectContent() {
                       <div
                         onClick={() => setSelectedPriceTier('LOW')}
                         className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${selectedPriceTier === 'LOW'
-                            ? 'border-green-500 bg-green-50 ring-2 ring-green-300'
-                            : 'border-gray-200 hover:border-green-300'
+                          ? 'border-green-500 bg-green-50 ring-2 ring-green-300'
+                          : 'border-gray-200 hover:border-green-300'
                           }`}
                       >
                         <div className="flex items-center justify-between mb-1">
@@ -542,8 +542,8 @@ function CreateProjectContent() {
                       <div
                         onClick={() => setSelectedPriceTier('MEDIUM')}
                         className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${selectedPriceTier === 'MEDIUM'
-                            ? 'border-green-500 bg-green-50 ring-2 ring-green-300'
-                            : 'border-gray-200 hover:border-green-300'
+                          ? 'border-green-500 bg-green-50 ring-2 ring-green-300'
+                          : 'border-gray-200 hover:border-green-300'
                           }`}
                       >
                         <div className="flex items-center justify-between mb-1">
@@ -562,8 +562,8 @@ function CreateProjectContent() {
                       <div
                         onClick={() => setSelectedPriceTier('HIGH')}
                         className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${selectedPriceTier === 'HIGH'
-                            ? 'border-green-500 bg-green-50 ring-2 ring-green-300'
-                            : 'border-gray-200 hover:border-green-300'
+                          ? 'border-green-500 bg-green-50 ring-2 ring-green-300'
+                          : 'border-gray-200 hover:border-green-300'
                           }`}
                       >
                         <div className="flex items-center justify-between mb-1">
@@ -814,7 +814,7 @@ function CreateProjectContent() {
                             <span className="text-xs font-semibold text-muted-foreground uppercase">Specializations</span>
                             <div className="flex flex-wrap gap-1 mt-1">
                               {submittedIntent.innerFields.map((field) => (
-                                <Badge key={field} variant="secondary">{field}</Badge>
+                                <Badge key={field} variant="outline">{field}</Badge>
                               ))}
                             </div>
                           </div>
