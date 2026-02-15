@@ -237,20 +237,33 @@ router.post('/register-with-test', async (req, res) => {
 // Generate test (public endpoint for signup)
 router.post('/generate-test', async (req, res) => {
   try {
+    console.log('📝 Test generation request received:', {
+      fields: req.body.fields,
+      testLevel: req.body.testLevel
+    });
+
     const { fields, testLevel } = req.body;
 
     if (!fields || !Array.isArray(fields) || fields.length === 0) {
+      console.error('❌ Validation error: Fields array is missing or empty');
       return res.status(400).json({ error: 'Fields array is required' });
     }
 
     if (!testLevel) {
+      console.error('❌ Validation error: Test level is missing');
       return res.status(400).json({ error: 'Test level is required' });
     }
 
     const field = fields[0];
     if (!field.field || !field.innerFields || field.innerFields.length === 0) {
+      console.error('❌ Validation error: Field or inner fields are missing');
       return res.status(400).json({ error: 'Field and inner fields are required' });
     }
+
+    console.log('✅ Validation passed, generating test with Gemini...');
+    console.log('   Field:', field.field);
+    console.log('   Inner Fields:', field.innerFields);
+    console.log('   Test Level:', testLevel);
 
     // Generate test using Gemini
     const generatedTest = await generateSkillTest({
@@ -259,10 +272,32 @@ router.post('/generate-test', async (req, res) => {
       testLevel,
     });
 
+    console.log('✅ Test generated successfully:', {
+      title: generatedTest.title,
+      hasDescription: !!generatedTest.description,
+      hasInstructions: !!generatedTest.instructions
+    });
+
     res.json(generatedTest);
   } catch (error: any) {
-    console.error('Test generation error:', error);
-    res.status(500).json({ error: error.message || 'Failed to generate test' });
+    console.error('❌ Test generation error:', error);
+    console.error('   Error message:', error.message);
+    console.error('   Error stack:', error.stack);
+
+    // Provide more specific error messages
+    let errorMessage = 'Failed to generate test';
+    if (error.message?.includes('API Key') || error.message?.includes('authentication')) {
+      errorMessage = 'Gemini API authentication failed. Please check your API key configuration.';
+    } else if (error.message?.includes('quota') || error.message?.includes('limit')) {
+      errorMessage = 'API quota exceeded. Please try again later.';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    res.status(500).json({
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

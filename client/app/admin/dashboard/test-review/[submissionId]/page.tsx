@@ -367,17 +367,77 @@ export default function TestReviewDetailPage() {
                                     </div>
                                 </div>
 
-                                {submission.submissionUrl && (
+                                {/* Submission Links */}
+                                {(submission.githubRepositoryLink || submission.figmaLink || submission.liveWebsiteUrl || submission.demoVideoUrl || submission.zipFileUrl) && (
                                     <div className="pt-4 border-t">
-                                        <p className="text-sm font-medium text-neutral-500 mb-2">Submission URL</p>
-                                        <a
-                                            href={submission.submissionUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-primary-600 hover:underline break-all"
-                                        >
-                                            {submission.submissionUrl}
-                                        </a>
+                                        <p className="text-sm font-medium text-neutral-500 mb-3">Submitted Links</p>
+                                        <div className="space-y-3">
+                                            {submission.githubRepositoryLink && (
+                                                <div className="bg-neutral-50 p-3 rounded-lg">
+                                                    <p className="text-xs font-medium text-neutral-600 mb-1">GitHub Repository</p>
+                                                    <a
+                                                        href={submission.githubRepositoryLink}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-primary-600 hover:underline break-all text-sm"
+                                                    >
+                                                        {submission.githubRepositoryLink}
+                                                    </a>
+                                                </div>
+                                            )}
+                                            {submission.figmaLink && (
+                                                <div className="bg-neutral-50 p-3 rounded-lg">
+                                                    <p className="text-xs font-medium text-neutral-600 mb-1">Figma Design Link</p>
+                                                    <a
+                                                        href={submission.figmaLink}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-primary-600 hover:underline break-all text-sm"
+                                                    >
+                                                        {submission.figmaLink}
+                                                    </a>
+                                                </div>
+                                            )}
+                                            {submission.liveWebsiteUrl && (
+                                                <div className="bg-neutral-50 p-3 rounded-lg">
+                                                    <p className="text-xs font-medium text-neutral-600 mb-1">Live Website URL</p>
+                                                    <a
+                                                        href={submission.liveWebsiteUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-primary-600 hover:underline break-all text-sm"
+                                                    >
+                                                        {submission.liveWebsiteUrl}
+                                                    </a>
+                                                </div>
+                                            )}
+                                            {submission.demoVideoUrl && (
+                                                <div className="bg-neutral-50 p-3 rounded-lg">
+                                                    <p className="text-xs font-medium text-neutral-600 mb-1">Demo Video URL</p>
+                                                    <a
+                                                        href={submission.demoVideoUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-primary-600 hover:underline break-all text-sm"
+                                                    >
+                                                        {submission.demoVideoUrl}
+                                                    </a>
+                                                </div>
+                                            )}
+                                            {submission.zipFileUrl && (
+                                                <div className="bg-neutral-50 p-3 rounded-lg">
+                                                    <p className="text-xs font-medium text-neutral-600 mb-1">ZIP File Download</p>
+                                                    <a
+                                                        href={submission.zipFileUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-primary-600 hover:underline break-all text-sm"
+                                                    >
+                                                        {submission.zipFileUrl}
+                                                    </a>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 

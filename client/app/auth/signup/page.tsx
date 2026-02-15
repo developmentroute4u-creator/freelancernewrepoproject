@@ -154,6 +154,11 @@ export default function SignUp() {
   const generateTest = async () => {
     setError('')
     setGeneratingTest(true)
+    console.log('🔄 Generating test...', {
+      field: formData.field,
+      innerFields: formData.innerFields,
+      testLevel: formData.testLevel
+    })
     try {
       const { data } = await api.post('/auth/generate-test', {
         fields: [{
@@ -162,9 +167,14 @@ export default function SignUp() {
         }],
         testLevel: formData.testLevel,
       })
+      console.log('✅ Test generated successfully:', data)
       setGeneratedTest(data)
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to generate test')
+      console.error('❌ Test generation failed:', err)
+      console.error('   Response:', err.response?.data)
+      const errorMessage = err.response?.data?.error || err.message || 'Failed to generate test. Please try again.'
+      setError(errorMessage)
+      console.error('   Error message shown to user:', errorMessage)
     } finally {
       setGeneratingTest(false)
     }
