@@ -12,6 +12,30 @@ if (!GEMINI_API_KEY) {
 
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
+/**
+ * Helper to retry API calls with exponential backoff
+ */
+async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3, initialDelay = 1000): Promise<T> {
+  let lastError: any;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      const isRetryable = error.status === 503 || error.status === 429 || error.message?.includes('high demand') || error.message?.includes('Service Unavailable');
+      
+      if (isRetryable && i < maxRetries - 1) {
+        const delay = initialDelay * Math.pow(2, i);
+        console.warn(`⚠️ Gemini API error (${error.status || 'unknown'}). Retrying in ${delay}ms... (Attempt ${i + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
+}
+
 export interface TestGenerationParams {
   field: string;
   innerFields: string[];
@@ -156,7 +180,7 @@ If a freelancer reads this task, they should think: "This is challenging but I c
 
 Generate the test now. Return ONLY the JSON object, no markdown, no code blocks, no explanations:`;
 
-    const result = await model.generateContent(prompt);
+    const result = await withRetry(() => model.generateContent(prompt));
     const response = await result.response;
     const text = response.text();
 
@@ -588,7 +612,7 @@ Return the response in JSON format:
 
 IMPORTANT: Generate ONLY based on what the client implied in their intent answers. Do not add features or services they did not mention.`;
 
-    const result = await model.generateContent(prompt);
+    const result = await withRetry(() => model.generateContent(prompt));
     const response = await result.response;
     const text = response.text();
 
